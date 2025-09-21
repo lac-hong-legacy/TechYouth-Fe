@@ -1,3 +1,4 @@
+import { registerUser } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -6,7 +7,6 @@ export interface User {
     email: string;
     display_name: string;
     is_active: boolean;
-    kratos_identity_id: string;
     user_type: string;
 }
 
@@ -45,7 +45,19 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
 
-
+        // Register
+        builder.addCase(registerUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(registerUser.fulfilled, (state, action: PayloadAction<User>) => {
+            state.loading = false;
+            state.user = action.payload;
+        });
+        builder.addCase(registerUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = (action.payload as string) || action.error.message || "Register failed";
+        });
 
 
     },

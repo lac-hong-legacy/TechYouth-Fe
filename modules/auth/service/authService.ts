@@ -1,66 +1,35 @@
-import { ENV } from "@/config/env"
-import axios from "axios";
+import { ENV } from "@/config/env";
 import { User } from "@/modules/auth/store/authSlice";
+import axios from "axios";
 
 
-export interface LoginPayLoad {
-    username: string;
+export interface RegisterPayload {
+    email: string;
     password: string;
 }
 
-
 export const authService = {
-    // API login
-    async login(data: LoginPayLoad): Promise<User> {
-        // láy flow ID
-        console.log(ENV.API_URL)
-        const response = await axios.get(`${ENV.API_URL}/self-service/login/api`, {
-            withCredentials: true,
-            headers: {
-                "Accept": "application/json",
-            }
-        });
-        const URLflowId = response.data.ui.action;
-        if (!URLflowId) throw new Error("Failed to get registration flow ID");
-
+    async register(data: RegisterPayload): Promise<User> {
         try {
+            console.log(ENV.API_URL);
             const payload = {
-                method: "password",
-                identifier: data.username,
+                email: data.email,
                 password: data.password,
             };
-            console.log("Payload gửi:", payload);
-            // gửi dữ liệu đăng ký
-            const res = await axios.post(URLflowId, payload, {
-                withCredentials: false,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            });
 
-            console.log("Phản hồi từ server:", res.data.session_token);
-            const payloadToken = {
-                session_token: res.data.session_token,
-            };
-            const resEnd = await axios.post(`${ENV.API_URL_TOKEN}/api/v1/auth/login`, payloadToken, {
-                withCredentials: false,
+            const response = await axios.post(`${ENV.API_URL}/api/v1/register`, payload, {
+                withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                },
+                }
             });
-            console.log(resEnd.data)
-            return resEnd.data;
+            console.log(response);
+            return response.data as User;
         } catch (error: any) {
             const data = error.response?.data;
-            if (data?.ui?.messages?.length) {
-                data.ui.messages.forEach((msg: any) => console.error("Kratos message:", msg.text));
-            } else {
-                console.error("Register error:", data || error.message);
-            }
+            console.error("Register error:", data || error.message);
             throw error;
         }
-
     },
 }
