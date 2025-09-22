@@ -1,4 +1,4 @@
-import { registerUser } from '@/modules/auth/store/authThunks';
+import { registerUser, loginUser } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -44,6 +44,21 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+        // Login
+        builder.addCase(loginUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(loginUser.fulfilled, (state, action: PayloadAction<any>) => {
+            state.loading = false;
+            state.accessToken = action.payload.data.access_token;
+            state.expiresIn = action.payload.data.expires_in;
+            state.user = action.payload.data.user;
+        });
+        builder.addCase(loginUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message || "Login failed";
+        });
 
         // Register
         builder.addCase(registerUser.pending, (state) => {

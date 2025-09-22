@@ -2,6 +2,7 @@ import { useAppDispatch } from "@/modules/hooks/useAppDispatch";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { loginUser } from "@/modules/auth/store/authThunks";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Button } from "react-native-paper";
@@ -19,7 +20,7 @@ type RootStackParamList = {
 
 const LoginForm = () => {
     const navigation = useNavigation<LoginScreenProp>();
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const dispatch = useAppDispatch();
 
@@ -28,7 +29,7 @@ const LoginForm = () => {
         let errorMsg = "";
 
         switch (field) {
-            case "username":
+            case "email":
                 if (!String(value).trim()) errorMsg = "Vui lòng nhập tài khoản";
                 break;
             case "password":
@@ -38,7 +39,7 @@ const LoginForm = () => {
         setErrors((prev) => ({ ...prev, [field]: errorMsg }));
     }
     const handlechange = (field: string, value: string) => {
-        if (field === 'username') setUsername(value);
+        if (field === 'email') setEmail(value);
 
         if (field === 'password') setPassword(value);
 
@@ -46,33 +47,26 @@ const LoginForm = () => {
     }
     const handLogin = () => {
         // validate tất cả các trường
-        validateField("username", username)
+        validateField("email", email)
         validateField("password", password)
 
         const hasErrors = Object.values(errors).some((msg) => msg);
         if (hasErrors) return;
 
-        if (username && password) {
-            // dispatch(loginUser({ username, password }))
-            //     .unwrap()
-            //     .then((res) => {
-            //         Alert.alert("Thành công", "Bạn đã đăng ký thành công!");
-            //         setUsername("");
-            //         setPassword("");
-            //         navigation.navigate("Tabs");
-            //     })
+        if (email && password) {
+            dispatch(loginUser({ email, password }))
+                .unwrap()
+                .then((res) => {
+                    Alert.alert("Thành công", "Bạn đã đăng nhập thành công!");
+                    setEmail("");
+                    setPassword("");
+                    navigation.navigate("Tabs");
+                })
 
-            // if (!username || !password) {
-            //     Alert.alert('Lỗi', 'vui lòng nhập đầy đủ thông tin')
-            //     return;
-            // }
-
-            // // thay bằng API LOgin
-            // if (username === 'admin' && password === '123') {
-            //     Alert.alert('Thành công', 'Đăng nhập thành công');
-            // } else {
-            //     Alert.alert('Lỗi', 'Tài khoản hoặc mật khẩu không đúng');
-            // }
+            if (!email || !password) {
+                Alert.alert('Lỗi', 'vui lòng nhập đầy đủ thông tin')
+                return;
+            }
         }
 
     }
@@ -89,8 +83,8 @@ const LoginForm = () => {
             <View style={styles.from}>
                 <Text style={styles.title}>Đăng nhập</Text>
 
-                <TextInput style={[styles.input, errors.username && styles.inputError]} placeholder="Tài khoản" value={username} onChangeText={(text) => handlechange("username", text)} />
-                {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+                <TextInput style={[styles.input, errors.email && styles.inputError]} placeholder="Email" value={email} onChangeText={(text) => handlechange("email", text)} />
+                {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                 <TextInput style={[styles.input, errors.password && styles.inputError]} placeholder="Mật khẩu" value={password} onChangeText={(text) => handlechange("password", text)} secureTextEntry />
                 {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                 <Button mode="contained" textColor="white" buttonColor="#8B0000" style={{ marginBottom: 10 }} onPress={handLogin}>Đăng nhập</Button>
