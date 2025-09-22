@@ -25,6 +25,7 @@ const LoginForm = () => {
     const dispatch = useAppDispatch();
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
     const validateField = (field: string, value: string | number) => {
         let errorMsg = "";
 

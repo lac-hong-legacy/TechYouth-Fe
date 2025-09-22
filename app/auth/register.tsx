@@ -32,7 +32,7 @@ const SignupForm = () => {
             case "email":
                 if (!String(value).trim()) errorMsg = "Vui lòng nhập email";
                 else if (!/\S+@\S+\.\S+/.test(String(value))) errorMsg = "Email không hợp lệ";
-                break;      
+                break;
             case "password":
                 if (!String(value)) errorMsg = "Vui lòng nhập mật khẩu";
                 else if (String(value).length < 6) errorMsg = "Mật khẩu phải có ít nhất 6 ký tự";
@@ -51,6 +51,7 @@ const SignupForm = () => {
         validateField('password', password);
         validateField('confirmPassword', confirmPassword);
 
+
         const hasErrors = Object.values(errors).some((msg) => msg);
         if (hasErrors) return;
 
@@ -58,7 +59,7 @@ const SignupForm = () => {
             dispatch(registerUser({ email, password }))
                 .unwrap()
                 .then((res) => {
-                    Alert.alert("Thành công", "Bạn đã đăng ký thành công!");                 
+                    Alert.alert("Thành công", "Bạn đã đăng ký thành công!");
                     setEmail("");
                     setPassword("");
                     setConfirmPassword("");
@@ -96,9 +97,9 @@ const SignupForm = () => {
     return (
         <View style={styles.container}>
             <View style={styles.card}>
-                <Text style={styles.title}>Đăng ký</Text>           
+                <Text style={styles.title}>Đăng ký</Text>
                 <TextInput style={[styles.input, errors.email && styles.inputError]} placeholder="Email" value={email} onChangeText={(text) => handlechange("email", text)} keyboardType="email-address" />
-                {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}             
+                {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                 <TextInput style={[styles.input, errors.password && styles.inputError]} placeholder="Mật khẩu" value={password} onChangeText={(Text) => handlechange("password", Text)} secureTextEntry />
                 {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                 <TextInput style={[styles.input, errors.confirmPassword && styles.inputError]} placeholder="Nhập lại mật khẩu" value={confirmPassword} onChangeText={(Text) => handlechange("confirmPassword", Text)} secureTextEntry />
