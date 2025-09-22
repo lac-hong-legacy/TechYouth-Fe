@@ -1,21 +1,24 @@
-import { useAppDispatch } from "@/modules/hooks/useAppDispatch";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import AppButton from "@/components/appButton";
+import BackButton from "@/components/BackButton";
+import { LoginResponse } from "@/modules/auth/store/authSlice";
 import { loginUser } from "@/modules/auth/store/authThunks";
-import { useState } from "react";
+import { useAppDispatch } from "@/modules/hooks/useAppDispatch";
+import { AuthContext } from '@/rootNavigator/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useContext, useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { Button } from "react-native-paper";
 
 
-type LoginScreenProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 type RootStackParamList = {
     Login: undefined;
     Signup: undefined;
     ForgotPassword: undefined;
-    Tabs: undefined;
+    Welcome: undefined;
     NotFound: undefined;
+    Tabs: undefined
 };
 
 const LoginForm = () => {
@@ -23,6 +26,7 @@ const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const dispatch = useAppDispatch();
+    const { isLoggedIn, login } = useContext(AuthContext);
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -54,14 +58,23 @@ const LoginForm = () => {
         const hasErrors = Object.values(errors).some((msg) => msg);
         if (hasErrors) return;
 
+        if (isLoggedIn) {
+            Alert.alert("Thông báo", "Bạn đã đăng nhập rồi!");
+            return;
+        }
+
         if (email && password) {
             dispatch(loginUser({ email, password }))
                 .unwrap()
-                .then((res) => {
+                .then(async (res: LoginResponse) => {
+                    await login(res.access_token);
+
+                    // Hiển thị thông báo thành công
                     Alert.alert("Thành công", "Bạn đã đăng nhập thành công!");
+
+                    // Reset email/password
                     setEmail("");
                     setPassword("");
-                    navigation.navigate("Tabs");
                 })
 
             if (!email || !password) {
@@ -77,24 +90,33 @@ const LoginForm = () => {
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("Tabs")}>
-                <Ionicons name="arrow-back" size={24} color="#8B0000" />
-                <Text style={styles.backText}>Trang chủ</Text>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("Welcome")}>
+                <BackButton />
+                <View style={styles.backTextContainer}>
+                    <Text style={styles.backText}>Điền thông tin</Text>
+                </View>
+
             </TouchableOpacity>
             <View style={styles.from}>
-                <Text style={styles.title}>Đăng nhập</Text>
-
                 <TextInput style={[styles.input, errors.email && styles.inputError]} placeholder="Email" value={email} onChangeText={(text) => handlechange("email", text)} />
                 {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
                 <TextInput style={[styles.input, errors.password && styles.inputError]} placeholder="Mật khẩu" value={password} onChangeText={(text) => handlechange("password", text)} secureTextEntry />
                 {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-                <Button mode="contained" textColor="white" buttonColor="#8B0000" style={{ marginBottom: 10 }} onPress={handLogin}>Đăng nhập</Button>
+                <AppButton title="Đăng Nhập" type="gray" weight="400" onPress={handLogin} style={styles.buttons} />
                 <Text style={styles.QMK} onPress={() => navigation.navigate("ForgotPassword")}>Quên Mật Khẩu</Text>
-                <Text style={styles.division}>-------------------------------------------------</Text>
-                <Button mode="contained" textColor="white" buttonColor="#8B0000" style={{ marginBottom: 10 }} onPress={handgooogle}>Google</Button>
-                <Button mode="contained" textColor="white" buttonColor="#8B0000" onPress={handgooogle}>Facebook</Button>
-                <Text style={styles.register} onPress={() => navigation.navigate("Signup")}>Chưa có tài khoản? Đăng ký ngay</Text>
             </View>
+
+            <View style={styles.contaibutton}>
+                <AppButton title="Đăng nhập bằng Google" type="secondary" onPress={handgooogle} style={styles.button} />
+                <AppButton title="Đăng nhập bằng Facebook" type="secondary" onPress={handgooogle} style={styles.button} />
+                <AppButton title="Đăng nhập bằng Apple" type="secondary" onPress={handgooogle} style={styles.button} />
+
+
+                <Text style={styles.text}>Khi đăng nhập vào VEN, bạn đồng ý với chính sách tài khoản và quyền riêng tư của chúng tôi.</Text>
+
+
+            </View>
+
         </View>
     );
 }
@@ -105,41 +127,42 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignContent: 'center',
-        backgroundColor: '#F5DEB3',
+        backgroundColor: '#ffffffff',
         paddingHorizontal: 10,
     },
     backButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 20,
+        flexDirection: "row",   // icon + text nằm ngang
+        alignItems: "center",   // căn giữa theo chiều dọc
+        padding: 10,
+        marginBottom: 24,
+    },
+    backTextContainer: {
+        flex: 1,
+        alignItems: "center",   // căn giữa theo chiều ngang
+        justifyContent: "center",
     },
     backText: {
-        marginLeft: 5,
-        color: "#8B0000",
         fontSize: 16,
-        fontWeight: "bold",
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        borderColor: 'red',
-        textAlign: 'center', // canh giữa
+        fontWeight: "600",
+        fontStyle: 'normal',
     },
     from: {
-        marginVertical: 20, // cách đều trên dưới
-        backgroundColor: '#FFF8DC',
-        padding: 20,
-        borderWidth: 1,
+        backgroundColor: '#ffffffff',
+        padding: 10,
         borderColor: 'gray',
         borderRadius: 10,
-
+        marginBottom: 40,
     },
     input: {
         borderWidth: 1, // viền trong
         borderColor: 'gray', // viền ngoài
         padding: 10, // bên trong
-        marginVertical: 10, // cách đều trên dưới
-        borderRadius: 10, // bo góc
+        marginVertical: 5, // cách đều trên dưới
+        borderRadius: 20, // bo góc
+    },
+    buttons: {
+        fontSize: 12,
+        marginTop: 24,
     },
     register: {
         color: 'blue',
@@ -154,8 +177,9 @@ const styles = StyleSheet.create({
     },
     QMK: {
         textAlign: 'center',
-        color: 'blue',
-        marginBottom: 10,
+        color: 'back',
+        marginTop: 16,
+        fontSize: 12
     },
     errorText: {
         color: 'red',
@@ -166,5 +190,17 @@ const styles = StyleSheet.create({
     inputError: {
         borderColor: 'red',
     },
+    contaibutton: {
 
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    button: {
+        marginBottom: 16
+    },
+    text: {
+        textAlign: 'center',
+        fontSize: 12,
+        fontWeight: '400'
+    }
 })

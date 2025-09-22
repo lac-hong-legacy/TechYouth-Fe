@@ -1,5 +1,5 @@
 import { ENV } from "@/config/env";
-import { User } from "@/modules/auth/store/authSlice";
+import { LoginResponse, User } from "@/modules/auth/store/authSlice";
 import axios from "axios";
 
 
@@ -12,6 +12,8 @@ export interface LoginPayLoad {
     email: string;
     password: string;
 }
+
+
 
 export const authService = {
     async register(data: RegisterPayload): Promise<User> {
@@ -38,11 +40,11 @@ export const authService = {
         }
     },
 
-    async login(data: LoginPayLoad): Promise<User> {
+    async login(data: LoginPayLoad): Promise<LoginResponse> {
         try {
             console.log(ENV.API_URL);
             const payload = {
-                email: data.email,
+                email_or_username: data.email,
                 password: data.password,
             };
 
@@ -54,7 +56,10 @@ export const authService = {
                 }
             });
             console.log(response);
-            return response.data as User;
+            const parsed = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            console.log('token', parsed);
+
+            return parsed.data as LoginResponse; // kiểu đúng
         } catch (error: any) {
             const data = error.response?.data;
             console.error("Login error:", data || error.message);

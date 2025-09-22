@@ -1,11 +1,10 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import React from 'react';
+import EventsScreen from '@/app/(tabs)/event';
+import HomeScreen from "@/app/(tabs)/index";
+import profilrScreen from '@/app/(tabs)/profile';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import HomeScreen from "@/app/(tabs)/index";
-import profilrScreen from '@/app/(tabs)/profile';
-import EventsScreen from '@/app/(tabs)/event';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,16 +22,16 @@ export default function TabLayout() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Bài học',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="book.fill" color={color} />,
+          title: 'Trang chủ',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="house.fill" color={color} />,
         }}
       />
       <Tab.Screen
         name="Events"
         component={EventsScreen}
         options={{
-          title: 'Sự kiện',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="house.fill" color={color} />,
+          title: 'Bài học',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="book.fill" color={color} />,
         }}
       />
       <Tab.Screen

@@ -1,15 +1,23 @@
 import TabsScreen from '@/app/(tabs)/_layout';
-import LoginScreen from '@/app/auth/login';
-import SignupScreen from '@/app/auth/register';
+import QuizScreen from '@/app/(tabs)/quiz';
+import { AuthContext } from '@/rootNavigator/AuthContext';
+import AuthNavigator from '@/rootNavigator/AuthNavigator';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-const Stack = createNativeStackNavigator();
+import { useContext } from 'react';
 
-export default function RootNavigator() {
+const AppStack = createNativeStackNavigator();
+
+
+function AppNavigator() {
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Tabs" component={TabsScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Signup" component={SignupScreen} />
-        </Stack.Navigator>
+        <AppStack.Navigator screenOptions={{ headerShown: false }}>
+            <AppStack.Screen name="Tabs" component={TabsScreen} />
+            <AppStack.Screen name="Quiz" component={QuizScreen} />
+        </AppStack.Navigator>
     );
+}
+export default function RootNavigator() {
+    const { isLoggedIn } = useContext(AuthContext)
+
+    return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
 }

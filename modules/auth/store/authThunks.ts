@@ -1,5 +1,5 @@
-import { RegisterPayload, authService, LoginPayLoad } from "@/modules/auth/service/authService";
-import { User } from "@/modules/auth/store/authSlice";
+import { authService, LoginPayLoad, RegisterPayload } from "@/modules/auth/service/authService";
+import { LoginResponse, User } from "@/modules/auth/store/authSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 
@@ -24,11 +24,12 @@ export const registerUser = createAsyncThunk<User, RegisterPayload>(
 );
 
 // Login
-export const loginUser = createAsyncThunk<User, LoginPayLoad>(
+export const loginUser = createAsyncThunk<LoginResponse, LoginPayLoad>(
     "auth/loginUser",
     async (data, { rejectWithValue }) => {
         try {
-            return await authService.login(data);
+            const res = await authService.login(data);
+            return res;
         } catch (err: any) {
             if (err.response) {
                 console.log("❌ Chi tiết lỗi từ server:", err.response.data);

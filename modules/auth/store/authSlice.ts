@@ -1,4 +1,4 @@
-import { registerUser, loginUser } from '@/modules/auth/store/authThunks';
+import { loginUser, registerUser } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -16,6 +16,12 @@ export interface AuthState {
     expiresIn: number | null;
     loading: boolean;
     error: string | null;
+}
+
+export interface LoginResponse {
+    access_token: string;
+    expires_in?: number;
+    user?: User;
 }
 
 interface ForgotPasswordOTPResponse {
@@ -50,11 +56,11 @@ const authSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(loginUser.fulfilled, (state, action: PayloadAction<any>) => {
+        builder.addCase(loginUser.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
             state.loading = false;
-            state.accessToken = action.payload.data.access_token;
-            state.expiresIn = action.payload.data.expires_in;
-            state.user = action.payload.data.user;
+            state.accessToken = action.payload.access_token;
+            state.expiresIn = action.payload.expires_in ?? null;
+            state.user = action.payload.user ?? null;
         });
         builder.addCase(loginUser.rejected, (state, action) => {
             state.loading = false;

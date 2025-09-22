@@ -1,10 +1,10 @@
+import { registerUser } from "@/modules/auth/store/authThunks";
+import { useAppDispatch, useAppSelector } from "@/modules/hooks/useAppDispatch";
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button } from "react-native-paper";
-import { useAppDispatch, useAppSelector } from "@/modules/hooks/useAppDispatch";
-import { registerUser } from "@/modules/auth/store/authThunks";
-import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
     Login: undefined;
@@ -13,7 +13,7 @@ type RootStackParamList = {
     NotFound: undefined;
 };
 
-type SignupScreenProp = StackNavigationProp<RootStackParamList, 'Signup'>;
+type SignupScreenProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
 const SignupForm = () => {
     const navigation = useNavigation<SignupScreenProp>();
