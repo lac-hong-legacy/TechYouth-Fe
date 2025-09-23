@@ -17,7 +17,7 @@ function AppNavigator() {
     );
 }
 export default function RootNavigator() {
-    const { isLoggedIn } = useContext(AuthContext)
+    const { canAccessApp } = useContext(AuthContext)
 
-    return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+    return canAccessApp ? <AppNavigator /> : <AuthNavigator />;
 }
