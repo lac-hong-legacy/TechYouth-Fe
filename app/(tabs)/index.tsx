@@ -1,3 +1,5 @@
+import ProgressHeader from '@/components/ProgressHeader';
+import { useGuest } from '@/modules/guest';
 import { fetchTimeline, heartUsers } from '@/modules/auth/store/authThunks';
 import { setCurrentLesson, setSelectedCharacterId } from '@/modules/auth/store/timelineSlice';
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
@@ -6,6 +8,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Book, Building, Castle, Crown, Flag, Flame, Gavel, Scroll, Shield, Star, Swords, Users } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { ActivityIndicator, Alert, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 
 const { width } = Dimensions.get('window');
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
@@ -255,6 +258,20 @@ export default function VietnamHistoryApp() {
 
   const currentItem = allItems[currentLesson] || {};
 
+  const { isGuestMode, hasReachedGuestLimit } = useGuest();
+
+  // Note: Guest session initialization is now handled by AuthContext
+  // No need to manually initialize here
+
+  const handlePlayAsGuest = () => {
+    if (hasReachedGuestLimit()) {
+      // Show registration prompt
+      navigation.navigate("Login");
+    } else {
+      navigation.navigate("Quiz");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
@@ -338,6 +355,10 @@ export default function VietnamHistoryApp() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#ffffffff',
+  },
+  content: {
     flex: 1,
     backgroundColor: '#F3F4F6',
   },
@@ -578,5 +599,20 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 12,
     marginTop: 4,
+    textAlign: 'center',
+  },
+  guestInfo: {
+    backgroundColor: 'rgba(255, 165, 2, 0.2)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FFA502',
+  },
+  guestInfoText: {
+    color: '#FFA502',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
