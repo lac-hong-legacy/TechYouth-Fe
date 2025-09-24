@@ -1,4 +1,4 @@
-import { loginUser, registerUser } from '@/modules/auth/store/authThunks';
+import { fetchTimeline , heartUsers, initProfile, loginUser, registerUser } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -16,6 +16,7 @@ export interface AuthState {
     expiresIn: number | null;
     loading: boolean;
     error: string | null;
+    hearts: any | null;
 }
 
 export interface LoginResponse {
@@ -36,7 +37,9 @@ const initialState: AuthState = {
     expiresIn: null,
     loading: false,
     error: null,
+    hearts: null
 };
+
 
 const authSlice = createSlice({
     name: "auth",
@@ -47,6 +50,7 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.expiresIn = null;
             state.error = null;
+            state.hearts = null;
         },
     },
     extraReducers: (builder) => {
@@ -81,7 +85,48 @@ const authSlice = createSlice({
             state.error = (action.payload as string) || action.error.message || "Register failed";
         });
 
+        // handle heartUsers thunk
+        builder.addCase(heartUsers.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(heartUsers.fulfilled, (state, action) => {
+            state.loading = false;
+            state.hearts = action.payload;
+        });
+        builder.addCase(heartUsers.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
 
+        builder
+            .addCase(initProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(initProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload; // dữ liệu trả về từ API init profile
+            })
+            .addCase(initProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+
+        // handle heartUsers thunk
+        builder.addCase(fetchTimeline .pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(fetchTimeline .fulfilled, (state, action) => {
+            state.loading = false;
+            state.user = action.payload;
+        });
+        builder.addCase(fetchTimeline .rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
     },
 });
 

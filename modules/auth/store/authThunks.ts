@@ -1,5 +1,9 @@
 import { authService, LoginPayLoad, RegisterPayload } from "@/modules/auth/service/authService";
+import { contentService } from "@/modules/auth/service/contentService";
+import { dynastyService } from '@/modules/auth/service/dynastyService';
+import { InitProfilePayload, userService } from "@/modules/auth/service/userService";
 import { LoginResponse, User } from "@/modules/auth/store/authSlice";
+import { CharacterQuiz, DynastyDetailData } from "@/modules/auth/store/dynastySlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 
@@ -41,3 +45,73 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginPayLoad>(
 
     }
 )
+
+
+// user/hearts
+export const heartUsers = createAsyncThunk(
+    "user/fetchHearts",
+    async (_, { rejectWithValue }) => {
+        try {
+            const data = await userService.hearts();
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
+// user/initProfile
+export const initProfile = createAsyncThunk(
+    "user/initProfile",
+    async (payload: InitProfilePayload, { rejectWithValue }) => {
+        try {
+            const data = await userService.initProfile(payload);
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
+
+export const fetchTimeline = createAsyncThunk(
+    "contant/contents",
+    async (_, { rejectWithValue }) => {
+        try {
+            const data = await contentService.content();
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
+
+
+// Fetch dynasty detail
+export const fetchDynastyDetail = createAsyncThunk(
+    "dynasty/fetchDynastyDetail",
+    async (characterId: string, { rejectWithValue }) => {
+        try {
+            const response = await dynastyService.getDynastyDetail(characterId);
+            return { data: response.data };
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+// Fetch character quiz
+export const fetchCharacterQuiz = createAsyncThunk<{ characterId: string; data: CharacterQuiz[] }, string, { rejectValue: string }>(
+    "dynasty/fetchCharacterQuiz",
+    async (characterId, { rejectWithValue }) => {
+        try {
+            const response = await dynastyService.getCharacterQuiz(characterId);
+            return { characterId, data: response.data };
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+

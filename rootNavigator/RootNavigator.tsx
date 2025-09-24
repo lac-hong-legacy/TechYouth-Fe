@@ -1,5 +1,5 @@
 import TabsScreen from '@/app/(tabs)/_layout';
-import QuizScreen from '@/app/(tabs)/quiz';
+import QuizScreen from '@/app/quiz/quiz';
 import { AuthContext } from '@/rootNavigator/AuthContext';
 import AuthNavigator from '@/rootNavigator/AuthNavigator';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,7 +17,17 @@ function AppNavigator() {
     );
 }
 export default function RootNavigator() {
-    const { isLoggedIn } = useContext(AuthContext)
+    const { isLoggedIn, isProfileCompleted } = useContext(AuthContext)
 
-    return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+    if (!isLoggedIn) {
+        return <AuthNavigator />;
+    }
+
+    // Nếu login rồi nhưng chưa nhập năm sinh → ở lại AuthNavigator (BirthYear)
+    if (isLoggedIn && !isProfileCompleted) {
+        return <AuthNavigator />; // BirthYear nằm trong AuthNavigator
+    }
+
+    // Nếu login và đã nhập profile → vào app chính
+    return <AppNavigator />;
 }

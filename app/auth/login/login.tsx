@@ -18,7 +18,9 @@ type RootStackParamList = {
     ForgotPassword: undefined;
     Welcome: undefined;
     NotFound: undefined;
-    Tabs: undefined
+    Tabs: undefined;
+    BirthYear: undefined
+
 };
 
 const LoginForm = () => {
@@ -26,7 +28,7 @@ const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const dispatch = useAppDispatch();
-    const { isLoggedIn, login } = useContext(AuthContext);
+    const { isLoggedIn, login, logout } = useContext(AuthContext);
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -75,6 +77,7 @@ const LoginForm = () => {
                     // Reset email/password
                     setEmail("");
                     setPassword("");
+                    navigation.navigate("BirthYear");
                 })
 
             if (!email || !password) {
@@ -87,6 +90,10 @@ const LoginForm = () => {
     const handgooogle = () => {
         Alert.alert('Thông báo', 'Đăng nhập bằng Google chưa được hỗ trợ');
     }
+
+    const handleLogout = async () => {
+        await logout();
+    };
 
     return (
         <View style={styles.container}>
@@ -107,14 +114,13 @@ const LoginForm = () => {
             </View>
 
             <View style={styles.contaibutton}>
+                <AppButton title="Đăng nhập bằng Google" type="secondary" onPress={handleLogout} style={styles.button} />
                 <AppButton title="Đăng nhập bằng Google" type="secondary" onPress={handgooogle} style={styles.button} />
                 <AppButton title="Đăng nhập bằng Facebook" type="secondary" onPress={handgooogle} style={styles.button} />
                 <AppButton title="Đăng nhập bằng Apple" type="secondary" onPress={handgooogle} style={styles.button} />
 
 
                 <Text style={styles.text}>Khi đăng nhập vào VEN, bạn đồng ý với chính sách tài khoản và quyền riêng tư của chúng tôi.</Text>
-
-
             </View>
 
         </View>
