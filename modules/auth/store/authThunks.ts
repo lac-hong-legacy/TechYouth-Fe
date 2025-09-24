@@ -60,6 +60,19 @@ export const heartUsers = createAsyncThunk(
     }
 )
 
+// user/AddheartUsers
+export const AddheartUsers = createAsyncThunk(
+    "user/AddheartUsers",
+    async (_, { rejectWithValue }) => {
+        try {
+            const data = await userService.Addhearts();
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
 // user/initProfile
 export const initProfile = createAsyncThunk(
     "user/initProfile",

@@ -1,11 +1,11 @@
-import { heartUsers } from "@/modules/auth/store/authThunks";
+import { AddheartUsers, heartUsers } from "@/modules/auth/store/authThunks";
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { AuthContext } from '@/rootNavigator/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Camera, Edit3, Flame, MoreVertical, Star, Timer, Trophy, User, Users } from 'lucide-react-native';
-import { useContext, useEffect } from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
 
@@ -19,10 +19,30 @@ type RootStackParamList = {
 };
 
 export default function ProfilrScreen() {
+    const [confirmVisible, setConfirmVisible] = useState(false); // popup xác nhận
+    const [adVisible, setAdVisible] = useState(false); // popup quảng cáo
+    const [countdown, setCountdown] = useState(5);
     const navigation = useNavigation<LoginScreenProp>();
     const dispatch = useAppDispatch();
     const { isLoggedIn, logout } = useContext(AuthContext);
     const { hearts, loading, error } = useAppSelector((state: any) => state.auth);
+
+    const handleReceiveHeart = () => {
+        setAdVisible(false);
+        setCountdown(5); // reset
+        dispatch(AddheartUsers())
+    };
+
+    // Đếm ngược 5s khi mở popup quảng cáo
+    useEffect(() => {
+        let timer: any;
+        if (adVisible && countdown > 0) {
+            timer = setInterval(() => {
+                setCountdown((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [adVisible, countdown]);
 
     useEffect(() => {
         dispatch(heartUsers());
@@ -81,11 +101,13 @@ export default function ProfilrScreen() {
                 </View>
                 <View style={styles.statsContainer}>
                     <View style={[styles.statColumn, styles.borderRight]}>
-                        <Flame color="#f07b0eff" size={24} fill="#f6660dff" />
-                        {loading && <Text style={styles.statLabel}>Loading...</Text>}
-                        {error && <Text>{error}</Text>}
-                        {hearts && <Text style={styles.statNumber}>{hearts.data?.hearts}</Text>}
-                        <Text style={styles.statLabel}>Mạng đang chơi</Text>
+                        <TouchableOpacity onPress={() => setConfirmVisible(true)}>
+                            <Flame color="#f07b0eff" size={24} fill="#f6660dff" />
+                            {loading && <Text style={styles.statLabel}>Loading...</Text>}
+                            {error && <Text>{error}</Text>}
+                            {hearts && <Text style={styles.statNumber}>{hearts.data?.hearts}</Text>}
+                            <Text style={styles.statLabel}>Mạng đang chơi</Text>
+                        </TouchableOpacity>
                     </View>
                     <View style={[styles.statColumn, styles.borderRight]}>
                         <User color="#feb341ff" size={25} fill="#feb341ff" />
@@ -140,6 +162,54 @@ export default function ProfilrScreen() {
                     </View>
                 </View>
             </ScrollView>
+            {/* Popup xác nhận */}
+            <Modal transparent visible={confirmVisible} animationType="fade">
+                <View style={styles.overlay}>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.modalText}>
+                            Bạn có muốn xem quảng cáo để được thêm tim không?
+                        </Text>
+                        <View style={styles.row}>
+                            <TouchableOpacity
+                                style={[styles.btn, { backgroundColor: "green" }]}
+                                onPress={async () => {
+                                    setConfirmVisible(false);
+                                    setAdVisible(true);
+                                    setCountdown(5); // reset countdown
+
+                                }}
+                            >
+                                <Text style={styles.btnText}>Có</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.btn, { backgroundColor: "red" }]}
+                                onPress={() => setConfirmVisible(false)}
+                            >
+                                <Text style={styles.btnText}>Không</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+            {/* Popup quảng cáo */}
+            <Modal transparent visible={adVisible} animationType="fade">
+                <View style={styles.overlay}>
+                    <View style={styles.modalBox}>
+                        {countdown > 0 ? (
+                            <Text style={styles.modalText}>
+                                Đang xem quảng cáo... {countdown}s
+                            </Text>
+                        ) : (
+                            <TouchableOpacity
+                                style={[styles.btn, { backgroundColor: "blue" }]}
+                                onPress={handleReceiveHeart}
+                            >
+                                <Text style={styles.btnText}>Nhận tim</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -262,5 +332,36 @@ const styles = StyleSheet.create({
         height: 150,      // chiều cao vừa với khung
         resizeMode: 'contain', // giữ tỉ lệ ảnh
         marginBottom: 4, // khoảng cách với label
-    }
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalBox: {
+        backgroundColor: "white",
+        padding: 20,
+        borderRadius: 12,
+        width: 300,
+        alignItems: "center",
+    },
+    modalText: {
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 20,
+    },
+    row: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    btn: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    btnText: {
+        color: "white",
+        fontWeight: "600",
+    },
 })

@@ -34,6 +34,32 @@ export const userService = {
         }
     },
 
+    async Addhearts(data?: HeartsPayload) {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+
+            const payloads = {
+
+                "amount": 3,
+                "source": "ad",
+            }
+            const response = await axios.post(`${ENV.API_URL}/api/v1/user/hearts/add`, payloads, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    "Content-Type": "application/json",
+                },
+            })
+            console.log('response', response);
+            alert("Bạn đã nhận được 1 tim ❤️")
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching hearts:', error.response || error.message);
+            throw error;
+        }
+    },
+
     async initProfile(data?: InitProfilePayload) {
         try {
             const token = await AsyncStorage.getItem('userToken');

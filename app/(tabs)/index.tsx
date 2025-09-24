@@ -258,19 +258,19 @@ export default function VietnamHistoryApp() {
 
   const currentItem = allItems[currentLesson] || {};
 
-  const { isGuestMode, hasReachedGuestLimit } = useGuest();
+  // const { isGuestMode, hasReachedGuestLimit } = useGuest();
 
   // Note: Guest session initialization is now handled by AuthContext
   // No need to manually initialize here
 
-  const handlePlayAsGuest = () => {
-    if (hasReachedGuestLimit()) {
-      // Show registration prompt
-      navigation.navigate("Login");
-    } else {
-      navigation.navigate("Quiz");
-    }
-  };
+  // const handlePlayAsGuest = () => {
+  //   if (hasReachedGuestLimit()) {
+  //     // Show registration prompt
+  //     navigation.navigate("Login");
+  //   } else {
+  //     navigation.navigate("Quiz");
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
