@@ -1,9 +1,9 @@
-import { AddheartUsers, heartUsers } from "@/modules/auth/store/authThunks";
+import { AddheartUsers, heartUsers, StatsUser, UserProfile } from "@/modules/auth/store/authThunks";
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { AuthContext } from '@/rootNavigator/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Camera, Edit3, Flame, MoreVertical, Star, Timer, Trophy, User, Users } from 'lucide-react-native';
+import { Camera, Edit3, Flame, Heart, MoreVertical, Star, Timer, Trophy, User, Zap, Users, Medal, Award } from 'lucide-react-native';
 import { useContext, useEffect, useState } from "react";
 import { Alert, Image, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -26,7 +26,7 @@ export default function ProfilrScreen() {
     const navigation = useNavigation<LoginScreenProp>();
     const dispatch = useAppDispatch();
     const { isLoggedIn, logout } = useContext(AuthContext);
-    const { hearts, loading, error } = useAppSelector((state: any) => state.auth);
+    const { hearts, loading, error, StatsInfo, profileUser } = useAppSelector((state: any) => state.auth);
 
     const handleReceiveHeart = () => {
         setAdVisible(false);
@@ -57,6 +57,8 @@ export default function ProfilrScreen() {
 
     useEffect(() => {
         dispatch(heartUsers());
+        dispatch(UserProfile());
+        dispatch(StatsUser());
         console.log("dddddddddddd", hearts);
     }, [dispatch])
 
@@ -97,7 +99,7 @@ export default function ProfilrScreen() {
 
                         {/* User Name */}
                         <View style={styles.userNameSection}>
-                            <Text style={styles.userName}>Nguyễn Minh Thuần</Text>
+                            {profileUser && <Text style={styles.userName}>{profileUser.data?.username}</Text>}
                             <TouchableOpacity>
                                 <Edit3 color="#888" size={16} />
                             </TouchableOpacity>
@@ -108,12 +110,107 @@ export default function ProfilrScreen() {
 
             <ScrollView style={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
                 <View style={styles.personalInfoHeader}>
+                    <Text style={styles.personalInfoTitle}>Thống kê cá nhân</Text>
+                </View>
+
+                {/* Hàng 1 */}
+                <View style={styles.statsContainer}>
+                    {/* Thời gian chơi */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Timer color="#f5c06bff" size={24} />
+                        <Text style={styles.statNumber}>
+                            {StatsInfo?.data ? `${Math.floor((StatsInfo.data.total_play_time ?? 0) / 60)} phút` : "0 phút"}
+                        </Text>
+                        <Text style={styles.statLabel}>Thời gian chơi</Text>
+                    </View>
+
+                    {/* Bài học */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Star color="#c8c811ff" size={24} />
+                        <Text style={styles.statNumber}>
+                            {StatsInfo?.data?.completed_lessons ?? 0}
+                        </Text>
+                        <Text style={styles.statLabel}>Bài học</Text>
+                    </View>
+
+                    {/* Streak */}
+                    <View style={styles.statColumn}>
+                        <Trophy color="#ff4757" size={24} />
+                        <Text style={styles.statNumber}>
+                            {StatsInfo?.data?.streak ?? 0}🔥
+                        </Text>
+                        <Text style={styles.statLabel}>Streak</Text>
+                    </View>
+                </View>
+
+                {/* Hàng 2 */}
+                <View style={styles.statsContainer}>
+                    {/* Hearts */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Heart color="#ff4757" size={24} fill="#ff4757" />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.hearts ?? 0}</Text>
+                        <Text style={styles.statLabel}>Mạng</Text>
+                    </View>
+
+                    {/* XP */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Star color="#00c3ff" size={24} />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.xp ?? 0}</Text>
+                        <Text style={styles.statLabel}>Kinh nghiệm</Text>
+                    </View>
+
+                    {/* Thành tựu */}
+                    <View style={styles.statColumn}>
+                        <Award color="#ffa502" size={24} />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.achievements ?? 0}</Text>
+                        <Text style={styles.statLabel}>Thành tựu</Text>
+                    </View>
+                </View>
+
+                {/* Hàng 3 */}
+                <View style={styles.statsContainer}>
+                    {/* Rank */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Medal color="#2ed573" size={24} />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.rank ?? "-"}</Text>
+                        <Text style={styles.statLabel}>Xếp hạng</Text>
+                    </View>
+
+                    {/* Level */}
+                    <View style={[styles.statColumn, styles.borderRight]}>
+                        <Trophy color="#1abc9c" size={24} />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.level ?? 0}</Text>
+                        <Text style={styles.statLabel}>Cấp độ</Text>
+                    </View>
+
+                    {/* Unlocked characters */}
+                    <View style={styles.statColumn}>
+                        <Users color="#8e44ad" size={24} />
+                        <Text style={styles.statNumber}>{StatsInfo?.data?.unlocked_characters ?? 0}</Text>
+                        <Text style={styles.statLabel}>Nhân vật mở khóa</Text>
+                    </View>
+                </View>
+
+                {/* Hàng 4 */}
+                <View style={styles.statsContainer}>
+                    {/* Spirit (type + stage) */}
+                    <View style={styles.statColumn}>
+                        <Zap color="#f07b0eff" size={24} />
+                        <Text style={styles.statNumber}>
+                            {StatsInfo?.data?.spirit_type ?? "-"} (Stage {StatsInfo?.data?.spirit_stage ?? "-"})
+                        </Text>
+                        <Text style={styles.statLabel}>Tinh thần</Text>
+                    </View>
+                </View>
+
+
+                <View style={styles.personalInfoHeader}>
                     <Text style={styles.personalInfoTitle}>Thông tin cá nhân</Text>
                 </View>
                 <View style={styles.statsContainer}>
                     <View style={[styles.statColumn, styles.borderRight]}>
-                        <TouchableOpacity onPress={() => setConfirmVisible(true)}>
-                            <Flame color="#f07b0eff" size={24} fill="#f6660dff" />
+                        <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} onPress={() => setConfirmVisible(true)}>
+                            <Heart color="#ff4757" size={24} fill="#ff4757" />
                             {loading && <Text style={styles.statLabel}>Loading...</Text>}
                             {error && <Text>{error}</Text>}
                             {hearts && <Text style={styles.statNumber}>{hearts.data?.hearts}</Text>}

@@ -1,4 +1,4 @@
-import { fetchTimeline , heartUsers, initProfile, loginUser, registerUser } from '@/modules/auth/store/authThunks';
+import { fetchTimeline, heartUsers, initProfile, loginUser, registerUser, StatsUser, UserProfile } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -17,6 +17,8 @@ export interface AuthState {
     loading: boolean;
     error: string | null;
     hearts: any | null;
+    StatsInfo: any | null;
+    profileUser: any | null
 }
 
 export interface LoginResponse {
@@ -37,7 +39,9 @@ const initialState: AuthState = {
     expiresIn: null,
     loading: false,
     error: null,
-    hearts: null
+    hearts: null,
+    StatsInfo: null,
+    profileUser: null,
 };
 
 
@@ -115,15 +119,43 @@ const authSlice = createSlice({
 
 
         // handle heartUsers thunk
-        builder.addCase(fetchTimeline .pending, (state) => {
+        builder.addCase(fetchTimeline.pending, (state) => {
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(fetchTimeline .fulfilled, (state, action) => {
+        builder.addCase(fetchTimeline.fulfilled, (state, action) => {
             state.loading = false;
             state.user = action.payload;
         });
-        builder.addCase(fetchTimeline .rejected, (state, action) => {
+        builder.addCase(fetchTimeline.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
+
+        // Stats User
+        builder.addCase(StatsUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(StatsUser.fulfilled, (state, action) => {
+            state.loading = false;
+            state.StatsInfo = action.payload;
+        });
+        builder.addCase(StatsUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
+
+        // profile User
+        builder.addCase(UserProfile.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(UserProfile.fulfilled, (state, action) => {
+            state.loading = false;
+            state.profileUser = action.payload;
+        });
+        builder.addCase(UserProfile.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
         });

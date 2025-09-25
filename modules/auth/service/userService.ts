@@ -34,6 +34,49 @@ export const userService = {
         }
     },
 
+    // User profile
+    async userProfilee(data?: HeartsPayload) {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+            console.log('responseTken', token);
+
+            const response = await axios.get(`${ENV.API_URL}/api/v1/user/profile`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                params: data || {}, // nếu API có query params
+            })
+            console.log('response', response);
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching hearts:', error.response || error.message);
+            throw error;
+        }
+    },
+
+    // Stats User
+    async StatsUser(data?: HeartsPayload) {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+
+            const response = await axios.get(`${ENV.API_URL}/api/v1/user/stats`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                params: data || {}, // nếu API có query params
+            })
+            console.log('response', response);
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching hearts:', error.response || error.message);
+            throw error;
+        }
+    },
+
     async Addhearts(data?: HeartsPayload) {
         try {
             const token = await AsyncStorage.getItem('userToken');

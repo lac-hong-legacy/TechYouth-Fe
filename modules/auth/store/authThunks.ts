@@ -45,6 +45,19 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginPayLoad>(
     }
 )
 
+// user/stats
+export const StatsUser = createAsyncThunk(
+    "user/StatsUser",
+    async (_, { rejectWithValue }) => {
+        try {
+            const data = await userService.StatsUser();
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
 
 // user/hearts
 export const heartUsers = createAsyncThunk(
@@ -52,6 +65,19 @@ export const heartUsers = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const data = await userService.hearts();
+            return data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+)
+
+// user/profile
+export const UserProfile = createAsyncThunk(
+    "user/UserProfile",
+    async (_, { rejectWithValue }) => {
+        try {
+            const data = await userService.userProfilee();
             return data;
         } catch (error: any) {
             return rejectWithValue(error.message);
