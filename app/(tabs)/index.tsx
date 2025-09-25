@@ -1,6 +1,4 @@
-import ProgressHeader from '@/components/ProgressHeader';
-import { useGuest } from '@/modules/guest';
-import { fetchTimeline, heartUsers } from '@/modules/auth/store/authThunks';
+import { fetchDynastyDetail, fetchTimeline, heartUsers } from '@/modules/auth/store/authThunks';
 import { setCurrentLesson, setSelectedCharacterId } from '@/modules/auth/store/timelineSlice';
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { useNavigation } from '@react-navigation/native';
@@ -21,27 +19,17 @@ type RootStackParamList = {
   NotFound: undefined;
   Tabs: undefined;
   Quiz: { characterId: string }
+  characterModal: { characterId: string }
 };
 
-const iconMap = {
-  'castle': Castle,
-  'shield': Shield,
-  'flame': Flame,
-  'crown': Crown,
-  'flag': Flag,
-  'gavel': Gavel,
-  'building': Building,
-  'users': Users,
-  'swords': Swords,
-  'scroll': Scroll,
-};
+const iconMap = { 'castle': Castle, 'shield': Shield, 'flame': Flame, 'crown': Crown, 'flag': Flag, 'gavel': Gavel, 'building': Building, 'users': Users, 'swords': Swords, 'scroll': Scroll, };
 
 export default function VietnamHistoryApp() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<LoginScreenProp>();
-  const { hearts, loading, error } = useAppSelector((state: any) => state.auth);
+  const { hearts, error } = useAppSelector((state: any) => state.auth);
 
-  const { selectedCharacterId, dynasties, currentLesson } = useAppSelector((state) => state.timeline);
+  const { selectedCharacterId, dynasties, currentLesson, loading } = useAppSelector((state) => state.timeline);
 
   useEffect(() => {
     dispatch(fetchTimeline());
@@ -61,6 +49,38 @@ export default function VietnamHistoryApp() {
     }
   }, [error]);
 
+
+  const handleShowCharacterDetail = async () => {
+    if (!selectedCharacterId) {
+      Alert.alert("Thông báo", "Chưa chọn nhân vật nào.");
+      return;
+    }
+    try {
+      // Gọi API fetch detail
+      const detail = await dispatch(fetchDynastyDetail(selectedCharacterId)).unwrap();
+      console.log("✅ Character detail:", detail);
+
+      Alert.alert(
+        `📜 ${detail.data.name}`,
+        `
+      🏰 Thời đại: ${detail.data.era}
+      👑 Triều đại: ${detail.data.dynasty}
+      📅 Năm sinh - mất: ${detail.data.birth_year} - ${detail.data.death_year}
+
+      📝 Mô tả:
+      ${detail.data.description}
+
+      💡 Danh ngôn:
+      "${detail.data.famous_quote}"
+  `
+      );
+
+    } catch (err) {
+      console.error("❌ Lỗi fetch detail:", err);
+      Alert.alert("Lỗi", "Không thể tải thông tin nhân vật");
+    }
+  };
+
   interface TimelineItem {
     id?: string;
     parentId?: string;
@@ -75,33 +95,29 @@ export default function VietnamHistoryApp() {
     subEvents?: TimelineItem[];
   }
 
-  // Flatten tất cả items (main + sub) để hiển thị
   const getAllItems = () => {
     if (!Array.isArray(dynasties)) return [];
 
     const allItems: TimelineItem[] = [];
     dynasties.forEach((dynasty) => {
-      // push dynasty chính
-      allItems.push(dynasty);
+      const dynastyYear = dynasty.start_year ?? 0;
+      allItems.push({ ...dynasty, year: dynastyYear });
 
-      // push subEvents nếu có
       if (dynasty.subEvents && Array.isArray(dynasty.subEvents)) {
-        dynasty.subEvents.forEach((subEvent: TimelineItem) => {
-          allItems.push({ ...subEvent, parentId: dynasty.id, isSubEvent: true });
+        dynasty.subEvents.forEach((subEvent: any) => {
+          allItems.push({ ...subEvent, parentId: dynasty.id, isSubEvent: true, year: subEvent.start_year ?? dynastyYear });
         });
       }
 
-      // ✅ push characters nếu có
       if (dynasty.characters && Array.isArray(dynasty.characters)) {
-        dynasty.characters.forEach((char) => {
-          allItems.push({
-            ...char,
-            parentId: dynasty.id,
-            isCharacter: true,
-          });
+        dynasty.characters.forEach((char: any) => {
+          allItems.push({ ...char, parentId: dynasty.id, isCharacter: true, year: char.birth_year });
         });
       }
     });
+
+    // Sort theo năm tăng dần
+    allItems.sort((a, b) => (a.year ?? 0) - (b.year ?? 0));
 
     return allItems;
   };
@@ -152,15 +168,11 @@ export default function VietnamHistoryApp() {
   // Tính toán vị trí zigzag cho timeline
   const getZigzagPosition = (index: number) => {
     const item = allItems[index];
-    if (item?.isMainDynasty) {
-      return (width / 2) - 70
-    } else {
-      const padding = 20;
-      const itemWidth = 150;
-      const isEven = index % 2 === 0;
-      return isEven ? padding : width - itemWidth - padding;
-    }
-  };
+    if (item?.isMainDynasty) return width / 2 - 70;
+    const padding = 40;
+    const itemWidth = 220;
+    return index % 2 === 0 ? padding : width - itemWidth - padding;
+  }
 
   interface DynastyButtonProps {
     item: any;          // hoặc bạn định kiểu chính xác cho item
@@ -181,11 +193,23 @@ export default function VietnamHistoryApp() {
     const IconComponent = iconMap[item.icon as keyof typeof iconMap] || Castle;
     const leftPosition = getZigzagPosition(index);
     const isMainDynasty = item.isMainDynasty || false;
-    const buttonSize = isMainDynasty ? 80 : 60;
-    const iconSize = isMainDynasty ? 32 : 20;
+    const buttonSize = 60;
+    const iconSize = 20;
+    // Nếu là main dynasty, thay bằng text header thay vì button icon
+    if (isMainDynasty) {
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
+          <View style={{ flex: 0.3, height: 1, borderBottomWidth: 1, borderColor: '#888', borderStyle: 'solid', marginRight: 5 }} />
+          <Text style={{ marginHorizontal: 10, fontWeight: 'bold', color: '#444' }}>
+            {item.name || 'Thời kỳ'}
+          </Text>
+          <View style={{ flex: 0.3, height: 1, borderBottomWidth: 1, borderColor: '#888', borderStyle: 'solid', marginLeft: 5 }} />
+        </View>
+      );
+    }
 
     return (
-      <View style={[styles.dynastyContainer, { alignItems: 'flex-start' }]}>
+      <View style={[styles.dynastyContainer, { alignItems: 'flex-start', marginVertical: 30 }]}>
 
         <View style={[styles.buttonAndInfoContainer, { left: leftPosition }]}>
           <TouchableOpacity
@@ -258,24 +282,10 @@ export default function VietnamHistoryApp() {
 
   const currentItem = allItems[currentLesson] || {};
 
-  // const { isGuestMode, hasReachedGuestLimit } = useGuest();
-
-  // Note: Guest session initialization is now handled by AuthContext
-  // No need to manually initialize here
-
-  // const handlePlayAsGuest = () => {
-  //   if (hasReachedGuestLimit()) {
-  //     // Show registration prompt
-  //     navigation.navigate("Login");
-  //   } else {
-  //     navigation.navigate("Quiz");
-  //   }
-  // };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
-
       {/* Header */}
       <View style={[styles.header, { backgroundColor: currentItem.color || '#10B981' }]}>
         <View style={styles.headerStats}>
@@ -298,7 +308,7 @@ export default function VietnamHistoryApp() {
       </View>
 
       {/* Current Lesson Card */}
-      <View style={[styles.lessonCard, { backgroundColor: currentItem.color || '#207d5eff' }]}>
+      <TouchableOpacity style={[styles.lessonCard, { backgroundColor: currentItem.color || '#207d5eff' }]} onPress={handleShowCharacterDetail}>
         <View style={styles.lessonHeader}>
           <View style={styles.lessonContent}>
             <Text style={styles.lessonCategory}>
@@ -313,17 +323,36 @@ export default function VietnamHistoryApp() {
           </View>
           <Book size={24} color="#fff" />
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Start Button */}
-      <TouchableOpacity style={styles.startButton} onPress={() => {
+      <TouchableOpacity style={styles.startButton} onPress={async () => {
         console.log("selectedCharacterId", selectedCharacterId);
         if (!selectedCharacterId) {
           Alert.alert('Thông báo', 'Vui lòng chọn một sự kiện để bắt đầu Quiz');
           return;
         }
-        console.log("selectedCharacterId", selectedCharacterId);
-        navigation.navigate('Quiz', { characterId: selectedCharacterId });
+        try {
+          // Fetch hearts mới trước khi kiểm tra
+          const updatedHearts = await dispatch(heartUsers()).unwrap();
+          const heartsCount = updatedHearts.data?.hearts || 0;
+
+          if (heartsCount === 0) {
+            Alert.alert(
+              'Hết lửa hy vọng',
+              'Bạn đã sử đang hết ngọn lửa hy vọng! Vui lòng đợi ngọn lửa hồi hoặc có thể xem quản cáo.',
+              [{ text: 'OK' }]
+            );
+            return;
+          }
+
+          // Nếu còn tim, vào Quiz
+          navigation.navigate('Quiz', { characterId: selectedCharacterId });
+
+        } catch (err) {
+          console.log('Lỗi fetch hearts:', err);
+          Alert.alert('Lỗi', 'Không thể kiểm tra tim hiện tại');
+        }
       }}>
         <Text style={styles.startButtonText}>BẮT ĐẦU</Text>
       </TouchableOpacity>
@@ -615,4 +644,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
+  eraHeader: {
+    fontSize: 18,          // cỡ chữ lớn hơn bình thường
+    fontWeight: 'bold',    // in đậm
+    color: '#1F2937',      // màu chữ tối, có thể đổi tùy theme
+    marginVertical: 10,    // khoảng cách trên/dưới
+    textAlign: 'center',   // căn giữa
+    letterSpacing: 2,      // khoảng cách giữa các chữ
+    textTransform: 'uppercase'
+  }
 });

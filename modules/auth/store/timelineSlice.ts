@@ -1,5 +1,8 @@
 import { fetchTimeline } from '@/modules/auth/store/authThunks'; // Import từ authThunks
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+const colors = ['#F59E0B', '#EC4899', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444']; // danh sách màu sẵn
+const usedColors: string[] = []; // màu đã dùng
+const eraColors: Record<string, string> = {}; // lưu màu cố định cho từng era
 
 export interface TimelineState {
     dynasties: any[];
@@ -73,6 +76,16 @@ const timelineSlice = createSlice({
             state.dynasties = [];
             state.currentLesson = 0;
             state.error = null;
+        },
+        updatePassedStatus: (state, action: PayloadAction<{ index: number; passed: boolean }>) => {
+            const { index, passed } = action.payload;
+            if (state.dynasties && state.dynasties[index]) {
+                state.dynasties[index].passed = passed;
+                // Tự động mở khóa bài tiếp theo nếu có
+                if (passed && state.dynasties[index + 1]) {
+                    state.dynasties[index + 1].completed = true; // để hiện màu nổi
+                }
+            }
         }
     },
     extraReducers: (builder) => {
@@ -106,34 +119,49 @@ const timelineSlice = createSlice({
 const transformApiData = (apiEras: ApiEra[]): any[] => {
     if (!Array.isArray(apiEras)) return [];
 
-    return apiEras.map(era => ({
-        id: era.era_id || era.id,
-        name: era.era || era.name,
-        period: `${era.start_year || ''} - ${era.end_year || ''}`,
-        color: era.color || getRandomColor(),
-        icon: era.icon || 'castle',
-        completed: era.completed || false,
-        isMainDynasty: true,
-        description: era.description || `Giai đoạn ${era.era || era.name}`,
-        subEvents: era.dynasties?.map(dynasty => ({
-            id: dynasty.dynasty_id || dynasty.id,
-            name: dynasty.dynasty || dynasty.name,
-            period: `${dynasty.start_year || ''} - ${dynasty.end_year || ''}`,
-            color: dynasty.color || era.color || getRandomColor(),
-            icon: dynasty.icon || 'crown',
-            completed: dynasty.completed || false,
-            isSubEvent: true,
-            parentId: era.era_id || era.id,
-            description: dynasty.description || `Triều đại ${dynasty.dynasty || dynasty.name}`,
-            characters: dynasty.characters || [], 
-        })) || []
-    }));
+    return apiEras.map(era => {
+        const eraName = era.era || era.name || 'Unknown Era';
+        const eraColor = era.color || getEraColor(eraName); // ✅ gọi hàm, trả về string
+
+        return {
+            id: era.era_id || era.id,
+            name: eraName,
+            period: `${era.start_year || ''} - ${era.end_year || ''}`,
+            color: eraColor, // ✅ string
+            icon: era.icon || 'castle',
+            completed: era.completed || false,
+            isMainDynasty: true,
+            description: era.description || `Giai đoạn ${eraName}`,
+            subEvents: era.dynasties?.map(dynasty => ({
+                id: dynasty.dynasty_id || dynasty.id,
+                name: dynasty.dynasty || dynasty.name,
+                period: `${dynasty.start_year || ''} - ${dynasty.end_year || ''}`,
+                color: dynasty.color || eraColor, // ✅ string, không phải function
+                icon: dynasty.icon || 'crown',
+                completed: dynasty.completed || false,
+                isSubEvent: true,
+                parentId: era.era_id || era.id,
+                description: dynasty.description || `Triều đại ${dynasty.dynasty || dynasty.name}`,
+                characters: dynasty.characters || [],
+            })) || []
+        };
+    });
 };
 
 
-const getRandomColor = () => {
-    const colors = ['#F59E0B', '#EC4899', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444'];
-    return colors[Math.floor(Math.random() * colors.length)];
+const getEraColor = (eraName: string) => {
+    // Nếu era đã có màu → dùng luôn
+    if (eraColors[eraName]) return eraColors[eraName];
+
+    // Lấy màu đầu tiên chưa dùng
+    const availableColors = colors.filter(c => !usedColors.includes(c));
+    const color = availableColors.length > 0 ? availableColors[0] : '#3B82F6'; // fallback màu xanh nếu hết
+
+    // Lưu màu cho era và đánh dấu đã dùng
+    eraColors[eraName] = color;
+    usedColors.push(color);
+
+    return color;
 };
 
 export const { setCurrentLesson, setSelectedCharacterId, clearTimelineError, resetTimeline } = timelineSlice.actions;

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Camera, Edit3, Flame, MoreVertical, Star, Timer, Trophy, User, Users } from 'lucide-react-native';
 import { useContext, useEffect, useState } from "react";
-import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
 
@@ -19,6 +19,7 @@ type RootStackParamList = {
 };
 
 export default function ProfilrScreen() {
+    const [refreshing, setRefreshing] = useState(false);
     const [confirmVisible, setConfirmVisible] = useState(false); // popup xác nhận
     const [adVisible, setAdVisible] = useState(false); // popup quảng cáo
     const [countdown, setCountdown] = useState(5);
@@ -31,6 +32,16 @@ export default function ProfilrScreen() {
         setAdVisible(false);
         setCountdown(5); // reset
         dispatch(AddheartUsers())
+    };
+
+    // Hàm khi người dùng kéo xuống để refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        try {
+            await dispatch(heartUsers()); // gọi lại API load tim
+        } finally {
+            setRefreshing(false); // tắt loading sau khi xong
+        }
     };
 
     // Đếm ngược 5s khi mở popup quảng cáo
@@ -95,7 +106,7 @@ export default function ProfilrScreen() {
                 </View>
             </View>
 
-            <ScrollView style={styles.scrollContent}>
+            <ScrollView style={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
                 <View style={styles.personalInfoHeader}>
                     <Text style={styles.personalInfoTitle}>Thông tin cá nhân</Text>
                 </View>
@@ -106,7 +117,7 @@ export default function ProfilrScreen() {
                             {loading && <Text style={styles.statLabel}>Loading...</Text>}
                             {error && <Text>{error}</Text>}
                             {hearts && <Text style={styles.statNumber}>{hearts.data?.hearts}</Text>}
-                            <Text style={styles.statLabel}>Mạng đang chơi</Text>
+                            <Text style={styles.statLabel}>Lửa hy vọng</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={[styles.statColumn, styles.borderRight]}>

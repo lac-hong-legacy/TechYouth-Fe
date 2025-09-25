@@ -78,7 +78,7 @@ const dynastySlice = createSlice({
         });
         builder.addCase(fetchCharacterQuiz.rejected, (state, action) => {
             state.quizLoading = false;
-            state.error = action.payload || "Lỗi tải quiz";
+            state.error = action.payload as string;
         });
     },
 });

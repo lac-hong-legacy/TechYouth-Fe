@@ -1,4 +1,5 @@
 import { ENV } from "@/config/env";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 
 export interface DynastyDetailPayload {
@@ -39,5 +40,54 @@ export const dynastyService = {
             console.log('Error fetching character quiz:', error.response || error.message);
             throw error;
         }
-    }
+    },
+
+
+    async validateLessonAnswer(lesson_id: string, question_id: string, answer: string) {
+        try {
+
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+            console.log('responseTkenvalidateLessonAnswer', token);
+
+            const response = await axios.post(`${ENV.API_URL}/api/v1/content/lessons/questions/answer`, {
+                lesson_id,
+                question_id,
+                answer,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    "Content-Type": "application/json",
+                },
+            });
+
+            console.log("lesson_idvalidateLessonAnswer", response);
+            return response.data;
+        } catch (error: any) {
+            throw error;
+        }
+    },
+
+
+    async lose() {
+        try {
+
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+            console.log('losetoken', token);
+
+            const response = await axios.post(`${ENV.API_URL}/api/v1/user/hearts/lose`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    "Content-Type": "application/json",
+                },
+            });
+            console.log("lose", response);
+            return response.data;
+        } catch (error: any) {
+            throw error;
+        }
+    },
 };
