@@ -14,6 +14,7 @@ type RootStackParamList = {
     NotFound: undefined;
     Welcome: undefined;
     Textlogin: undefined;
+    TestSignup: undefined;
 };
 
 type SignupScreenProp = NativeStackNavigationProp<RootStackParamList, "Welcome">
@@ -42,7 +43,7 @@ export default function WelcomeScreen() {
 
             <AppButton title="Khám phá ngay" onPress={handleGuestMode} style={styles.buton} />
             <AppButton title="Đã có Tài Khoản" type="secondary" onPress={() => navigation.navigate("Textlogin")} style={styles.buton} />
-            <AppButton title="Đăng ký ngay" type="secondary" onPress={() => navigation.navigate("Signup")} style={styles.buton} />
+            <AppButton title="Đăng ký ngay" type="secondary" onPress={() => navigation.navigate("TestSignup")} style={styles.buton} />
         </View>
     );
 }

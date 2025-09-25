@@ -210,7 +210,7 @@ export default function ProfilrScreen() {
                 <View style={styles.statsContainer}>
                     <View style={[styles.statColumn, styles.borderRight]}>
                         <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} onPress={() => setConfirmVisible(true)}>
-                            <Heart color="#ff4757" size={24} fill="#ff4757" />
+                            <Flame color="#ff4757" size={24} fill="#ff4757" />
                             {loading && <Text style={styles.statLabel}>Loading...</Text>}
                             {error && <Text>{error}</Text>}
                             {hearts && <Text style={styles.statNumber}>{hearts.data?.hearts}</Text>}

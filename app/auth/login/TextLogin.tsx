@@ -11,6 +11,7 @@ type RootStackParamList = {
     NotFound: undefined;
     Welcome: undefined;
     Textlogin: undefined;
+    TestSignup: undefined
 };
 
 type SignupScreenProp = NativeStackNavigationProp<RootStackParamList, "Textlogin">
@@ -31,7 +32,7 @@ export default function TextLogin() {
             <View style={styles.group}>
                 <Text style={styles.title}>Bạn là người mới?</Text>
                 <Text style={styles.titles}>Bắt đầu khám phá ngay</Text>
-                <AppButton title="Đăng ký" type="secondary" onPress={() => navigation.navigate("Login")} />
+                <AppButton title="Đăng ký" type="secondary" onPress={() => navigation.navigate("TestSignup")} />
             </View>
 
         </View>

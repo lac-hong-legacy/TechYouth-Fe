@@ -4,6 +4,7 @@ import axios from "axios";
 
 
 export interface RegisterPayload {
+    username: string;
     email: string;
     password: string;
 }
@@ -20,10 +21,10 @@ export const authService = {
         try {
             console.log(ENV.API_URL);
             const payload = {
+                username: data.username,
                 email: data.email,
                 password: data.password,
             };
-
             const response = await axios.post(`${ENV.API_URL}/api/v1/register`, payload, {
                 withCredentials: true,
                 headers: {
