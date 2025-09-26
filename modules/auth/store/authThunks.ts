@@ -85,6 +85,19 @@ export const UserProfile = createAsyncThunk(
     }
 )
 
+export const fetchUserCollection = createAsyncThunk(
+    'auth/fetchUserCollection',
+    async (_, { rejectWithValue }) => {
+        try {
+            const collection = await userService.userCollection();
+            return collection; // trả về payload cho slice
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+
 // user/AddheartUsers
 export const AddheartUsers = createAsyncThunk(
     "user/AddheartUsers",

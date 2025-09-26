@@ -1,57 +1,92 @@
+import BackButton from '@/components/BackButton';
+import { ENV } from "@/config/env";
 import { fetchCharacterQuiz, heartUsers, loses, validateLessonAnswer } from "@/modules/auth/store/authThunks";
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av';
 import { Flame, Shield } from 'lucide-react-native';
-import { useEffect, useState } from "react";
-import { Alert, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-
-type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
+type QuizScreenProp = NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
 type QuizScreenRouteProp = RouteProp<RootStackParamList, 'Quiz'>;
 
 type RootStackParamList = {
     Login: undefined;
     Signup: undefined;
     ForgotPassword: undefined;
-    Tabs: undefined;
+    Tabs: undefined | {
+        screen: string;
+        params?: {
+            quizResult?: {
+                current_score: number;
+                total_points: number;
+                earned_points: number;
+                passed: boolean;
+            };
+        };
+    };
     NotFound: undefined;
     Quiz: { characterId: string }
 };
+
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
 
 export default function QuizScreen() {
-    const navigation = useNavigation<LoginScreenProp>();
+    const navigation = useNavigation<QuizScreenProp>();
     const route = useRoute<QuizScreenRouteProp>();
     const dispatch = useAppDispatch();
     const { characterId } = route.params;
     const { quizData, quizLoading } = useAppSelector((state) => state.dynasty);
+    const { hearts } = useAppSelector((state: any) => state.auth);
+
     const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-    const [showResult, setShowResult] = useState(false);
+    const [showQuiz, setShowQuiz] = useState(false);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [canSkip, setCanSkip] = useState(false);
+    const [videoFinished, setVideoFinished] = useState(false);
+
     const [fillBlankAnswer, setFillBlankAnswer] = useState("");
-    const { hearts, loading, error } = useAppSelector((state: any) => state.auth);
-
-    useEffect(() => {
-        if (characterId) {
-            dispatch(fetchCharacterQuiz(characterId));
-            console.log("✅ characterId received in QuizScreen:", characterId)
-        }
-    }, [characterId]);
-
-    useEffect(() => {
-        dispatch(heartUsers());
-    }, [dispatch])
-    //Thêm state để lưu đáp án người dùng:
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
-    const lesson = Array.isArray(quizData) && quizData.length > 0 ? quizData[0] : null;
-    const questions = lesson?.questions || [];
-    const question = questions[currentQuestionIdx] || null;
     const [orderAnswer, setOrderAnswer] = useState<string[]>([]);
-
     const [validating, setValidating] = useState(false);
     const [quizResult, setQuizResult] = useState<any>(null);
 
+    const lesson = Array.isArray(quizData) && quizData.length > 0 ? quizData[0] : null;
+    const questions = lesson?.questions || [];
+    const question = questions[currentQuestionIdx] || null;
+    const [submitted, setSubmitted] = useState(false);
+    const videoRef = useRef<Video>(null);
+    const [canGoNext, setCanGoNext] = useState(false);
+    const [countdown, setCountdown] = useState(60); // 60 giây
+    const [countdownStarted, setCountdownStarted] = useState(false);
 
+
+    const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+    const [connectAnswer, setConnectAnswer] = useState<{ left: string, right: string }[]>([]);
+
+
+    // Lấy quiz
+    useEffect(() => {
+        if (characterId) {
+            dispatch(fetchCharacterQuiz(characterId));
+        }
+    }, [characterId]);
+
+    // Load video
+    useEffect(() => {
+        if (lesson?.video_url) {
+            setVideoUrl(`${ENV.API_URL}${lesson.video_url}`);
+            setTimeout(() => setCanSkip(true), lesson.can_skip_after * 1000);
+        }
+    }, [lesson]);
+
+    useEffect(() => {
+        dispatch(heartUsers());
+    }, [dispatch]);
+
+    // Handle submit answer
     const handleAnswer = async (option?: string, orderingAnswer?: string[]) => {
         if (!lesson || !question || validating) return;
         setValidating(true);
@@ -59,7 +94,14 @@ export default function QuizScreen() {
         let answerValue = "";
         if (question.type === "multiple_choice") answerValue = option || "";
         if (question.type === "fill_blank") answerValue = fillBlankAnswer;
-        if (question.type === "ordering") answerValue = JSON.stringify(orderingAnswer || []);
+        if (question.type === "ordering" || question.type === "connect") {
+            // Chỉ submit khi đủ đáp án
+            if (!orderingAnswer || orderingAnswer.length !== question.options.length) {
+                setValidating(false);
+                return;
+            }
+            answerValue = JSON.stringify(orderingAnswer);
+        }
 
         try {
             const res = await dispatch(validateLessonAnswer({
@@ -67,60 +109,192 @@ export default function QuizScreen() {
                 question_id: question.id,
                 answer: answerValue
             })).unwrap();
+            console.log(res);
 
-            console.log("✅ Full validate response:", res);
-            setQuizResult(res);
+            setFillBlankAnswer("");
+            setSelectedOption(null);
+            setOrderAnswer([]);
+            setSelectedLeft(null);    // <-- reset connect
+            setConnectAnswer([]);     // <-- reset connect
 
-            if (res.correct || res.passed) {
-                setFillBlankAnswer("");
-                setSelectedOption(null);
-                setOrderAnswer([]);
-                if (res.passed) {
-                    // Bỏ qua các câu còn lại
-                    setShowResult(true);
-                } else if (currentQuestionIdx < questions.length - 1) {
-                    setCurrentQuestionIdx(currentQuestionIdx + 1);
+            if (res.correct) {
+                if (currentQuestionIdx < questions.length - 1) {
+                    // còn câu hỏi -> chuyển sang câu tiếp theo
+                    setCurrentQuestionIdx((prev) => prev + 1);
+                    setSubmitted(false);
                 } else {
-                    setShowResult(true);
+                    // hết câu hỏi -> show Quiz hoàn thành  
+                    setQuizResult(res);
+                    setShowQuiz(true);
+
+                    // hết câu hỏi -> navigate sang Profile kèm quizResult
+                    navigation.getParent()?.setParams({
+                        screen: "Profile", // nếu Profile nằm trong Tabs
+                        params: {
+                            quizResult: {
+                                current_score: res.current_score,
+                                total_points: questions.length * 10,
+                                earned_points: res.earned_points ?? res.current_score,
+                                passed: res.current_score >= (questions.length * 5),
+                            },
+                        },
+                    });
                 }
             } else {
+                // sai -> báo lỗi, không chuyển câu
                 alert("Sai rồi, thử lại nhé!");
                 try {
-                    await dispatch(loses()).unwrap(); // trừ tim
-                    const updatedHearts = await dispatch(heartUsers()).unwrap(); // fetch lại hearts mới
+                    await dispatch(loses()).unwrap();
+                    const updatedHearts = await dispatch(heartUsers()).unwrap();
                     if (updatedHearts.data?.hearts === 0) {
-                        Alert.alert(
-                            "Hết tim",
-                            "Bạn đã hết tim rồi! Quay về trang chính.",
-                            [
-                                {
-                                    text: "OK",
-                                    onPress: () => navigation.navigate("Tabs") // chuyển về Tabs (index)
-                                }
-                            ]
-                        );
+                        Alert.alert("Hết tim", "Bạn đã hết lửa hy vọng rồi! Quay về trang chính.", [
+                            { text: "OK", onPress: () => navigation.navigate("Tabs") }
+                        ]);
                     }
-                } catch (error) {
-                    console.log("Lỗi khi trừ tim:", error);
+                } catch (err) {
+                    console.log(err);
                 }
-                if (question.type === "ordering") setOrderAnswer([]);
             }
         } catch (err) {
             alert("Có lỗi khi kiểm tra đáp án!");
-            if (question.type === "ordering") setOrderAnswer([]);
         } finally {
             setValidating(false);
         }
     };
 
+    const startCountdown = () => {
+        if (countdownStarted) return; // đã chạy rồi thì thôi
+        setCountdownStarted(true);
+        setCanGoNext(false);
+        setCountdown(60); // reset
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setCanGoNext(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // Ordering auto submit
     useEffect(() => {
-        if (question?.type === "ordering" && orderAnswer.length === question.options.length) {
-            handleAnswer(undefined, orderAnswer); // gửi lên server
+        if ((question?.type === "ordering" || question?.type === "connect") &&
+            orderAnswer.length === question.options.length &&
+            !submitted) {
+            setSubmitted(true);  // đánh dấu đã submit
+            handleAnswer(undefined, orderAnswer);
         }
-    }, [orderAnswer, question]);
+    }, [orderAnswer, question, submitted]);
+
+    useEffect(() => {
+        if (question?.type === "connect" && connectAnswer.length === Object.keys(question.metadata.pairs).length) {
+            const answerObj: Record<string, string> = {};
+            connectAnswer.forEach(a => answerObj[a.left] = a.right);
+            handleAnswer(undefined, Object.entries(answerObj).map(([k, v]) => `${k}=>${v}`));
+        }
+    }, [connectAnswer, question]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setCanGoNext(true), 60000); // 60 giây
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (question && (question.type === "ordering" || question.type === "connect")) {
+        console.log("Gửi dữ liệu:", orderAnswer);
+        console.log("JSON:", JSON.stringify(orderAnswer));
+    }
+
+    if (!question) {
+        return (
+            <View style={styles.loading}>
+                <Text>Đang tải câu hỏi...</Text>
+            </View>
+        );
+    }
+
+    // Loading
+    if (quizLoading || (!showQuiz && !videoUrl)) {
+        return (
+            <View style={styles.loading}>
+                <ActivityIndicator size="large" color="#3B82F6" />
+                <Text>Đang tải...</Text>
+            </View>
+        );
+    }
+
+    // Render video
+    if (!showQuiz && videoUrl) {
+        return (
+            <View style={{
+                flex: 1,
+                backgroundColor: '#f4ecd8', // màu nền hợp với lịch sử
+                padding: 16,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <View style={{
+                    position: 'absolute',
+                    top: STATUSBAR_HEIGHT + 70,
+                    left: 16,
+                    zIndex: 20
+                }}>
+                    <TouchableOpacity onPress={() => navigation.navigate("Tabs")}>
+                        <BackButton />
+                    </TouchableOpacity>
+                </View>
+                <View style={{
+                    width: '100%',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    backgroundColor: '#3c3b3bff', // nền của chính khung video
+                    elevation: 6,
+                    shadowColor: '#000',
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 4 },
+                }}>
+                    <Video
+                        ref={videoRef}
+                        style={{ width: '100%', height: 240 }}
+                        source={{ uri: videoUrl }}
+                        useNativeControls
+                        resizeMode={ResizeMode.CONTAIN}
+                        onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                            if (status.isLoaded && status.didJustFinish) setVideoFinished(true);
+
+                            // Bắt đầu đếm khi video play
+                            if ('isPlaying' in status && status.isPlaying && !canGoNext && countdown === 60) {
+                                startCountdown();
+                            }
+                        }}
+                    />
+                </View>
+
+                <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+                    <TouchableOpacity
+                        style={[styles.nextBtn, { opacity: canGoNext ? 1 : 0.5 }]}
+                        onPress={() => setShowQuiz(true)}
+                        disabled={!canGoNext}
+                    >
+                        <Text style={{ color: "#fff", fontSize: 16 }}>
+                            👉 Xem Quiz {!canGoNext ? `(${countdown}s)` : ""}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.nextBtn} onPress={() => videoRef.current?.replayAsync()}>
+                        <Text style={{ color: "#fff", fontSize: 16 }}>🔁 Xem lại video</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
+    // Quiz UI
     return (
         <View style={styles.container}>
-            {/* Header giống index */}
             <View style={styles.header}>
                 <View style={styles.headerStats}>
                     <View style={styles.leftStats}>
@@ -129,8 +303,6 @@ export default function QuizScreen() {
                     <View style={styles.rightStats}>
                         <View style={styles.statItem}>
                             <Flame size={17} color="#ff0000ff" fill="#f6660dff" />
-                            {loading && <Text style={styles.statText}></Text>}
-                            {error && <Text>{error}</Text>}
                             {hearts && <Text style={styles.statText}>{hearts.data?.hearts}</Text>}
                         </View>
                         <View style={styles.statItem}>
@@ -141,42 +313,31 @@ export default function QuizScreen() {
                 </View>
             </View>
 
-            {/* Hiển thị câu hỏi và đáp án */}
-            {!showResult && question && (
+            {!quizResult && question && (
                 <View style={{ marginBottom: 40 }}>
                     <View style={styles.questionBox}>
-                        <Text style={styles.questionText}>
-                            {question.question}
-                        </Text>
+                        <Text style={styles.questionText}>{question.question}</Text>
                     </View>
+
                     <View style={styles.answersContainer}>
-                        {question.options && question.options.map((option: string, idx: number) => (
+                        {question && question.type === "multiple_choice" && question.options.map((option: string, idx: number) => (
                             <TouchableOpacity
                                 key={idx}
                                 style={styles.answerBox}
-                                activeOpacity={0.7}
                                 onPress={() => handleAnswer(option)}
                                 disabled={validating}
                             >
                                 <Text style={styles.answerText}>{option}</Text>
                             </TouchableOpacity>
                         ))}
-                        {question.type === "fill_blank" && (
-                            <View>
+
+                        {question && question.type === "fill_blank" && (
+                            <>
                                 <TextInput
-                                    style={{
-                                        backgroundColor: "#fff",
-                                        borderRadius: 10,
-                                        padding: 14,
-                                        fontSize: 16,
-                                        marginBottom: 18,
-                                        borderWidth: 1,
-                                        borderColor: "#d1d5db",
-                                    }}
+                                    style={styles.input}
                                     placeholder="Nhập đáp án..."
                                     value={fillBlankAnswer}
                                     onChangeText={setFillBlankAnswer}
-                                    autoCorrect={false}
                                 />
                                 <TouchableOpacity
                                     style={[styles.answerBox, { backgroundColor: "#3B82F6" }]}
@@ -184,57 +345,106 @@ export default function QuizScreen() {
                                 >
                                     <Text style={[styles.answerText, { color: "#fff" }]}>Kiểm tra</Text>
                                 </TouchableOpacity>
-                            </View>
+                            </>
                         )}
-                        {question.type === "ordering" && (
-                            <View>
-                                {question.options.map((option: string, idx: number) => {
-                                    const selectedIndex = orderAnswer.indexOf(option);
 
-                                    return (
-                                        <TouchableOpacity
-                                            key={idx}
-                                            style={[
-                                                styles.answerBox,
-                                                { backgroundColor: selectedIndex !== -1 ? "#3B82F6" : "#fff" }
-                                            ]}
-                                            onPress={() => {
-                                                if (!orderAnswer.includes(option)) {
-                                                    setOrderAnswer(prev => [...prev, option]); // chỉ thêm vào state, không gọi API
-                                                }
-                                            }}
-                                            disabled={validating}
-                                        >
-                                            <Text style={[
-                                                styles.answerText,
-                                                { color: selectedIndex !== -1 ? "#fff" : "#111827" }
-                                            ]}>
-                                                {option} {selectedIndex !== -1 ? selectedIndex + 1 : ""}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    )
-                                })}
+                        {question && (question.type === "ordering" || question.type === "connect") && question.options.map((option: string, idx: number) => {
+                            const selectedIndex = orderAnswer.indexOf(option);
+                            return (
+                                <TouchableOpacity
+                                    key={idx}
+                                    style={[styles.answerBox, { backgroundColor: selectedIndex !== -1 ? "#3B82F6" : "#fff" }]}
+                                    onPress={() => {
+                                        setOrderAnswer(prev => {
+                                            if (prev.includes(option)) {
+                                                // Nếu đã chọn -> bỏ đi
+                                                return prev.filter(o => o !== option);
+                                            } else {
+                                                // Chưa chọn -> thêm vào cuối
+                                                return [...prev, option];
+                                            }
+                                        });
+                                    }}
+                                    disabled={validating}
+                                >
+                                    <Text style={[styles.answerText, { color: selectedIndex !== -1 ? "#fff" : "#111827" }]}>
+                                        {option} {selectedIndex !== -1 ? selectedIndex + 1 : ""}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+
+                        {question.type === "connect" && (
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                {/* Cột Left */}
+                                <View style={{ flex: 1, marginRight: 8 }}>
+                                    {Object.keys(question.metadata.pairs).map((left, idx) => {
+                                        const used = connectAnswer.some(a => a.left === left);
+                                        return (
+                                            <TouchableOpacity
+                                                key={idx}
+                                                disabled={used}
+                                                style={[styles.answerBox, { backgroundColor: used ? "#3B82F6" : "#fff" }]}
+                                                onPress={() => setSelectedLeft(left)}
+                                            >
+                                                <Text style={{ color: used ? "#fff" : "#111827" }}>{left}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+
+                                {/* Cột Right */}
+                                <View style={{ flex: 1, marginLeft: 8 }}>
+                                    {Object.values(question.metadata.pairs).map((right, idx) => {
+                                        const used = connectAnswer.some(a => a.right === right);
+                                        return (
+                                            <TouchableOpacity
+                                                key={idx}
+                                                disabled={used || !selectedLeft}
+                                                style={[styles.answerBox, { backgroundColor: used ? "#3B82F6" : "#fff" }]}
+                                                onPress={() => {
+                                                    if (!selectedLeft) return;
+
+                                                    if (question.metadata.pairs[selectedLeft] === right) {
+                                                        setConnectAnswer(prev => [...prev, { left: selectedLeft, right: right as string }]);
+                                                    } else {
+                                                        alert("Sai nối, chọn lại!");
+                                                    }
+
+                                                    setSelectedLeft(null);
+                                                }}
+                                            >
+                                                <Text style={{ color: used ? "#fff" : "#111827" }}>{right as string}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
                             </View>
                         )}
                     </View>
                 </View>
             )}
-            {showResult && quizResult && (
-                <View style={styles.questionBox}>
-                    <Text style={styles.questionText}>🎉 Quiz hoàn thành!</Text>
-                    <Text style={[styles.questionText, { marginTop: 16 }]}>
-                        Điểm hiện tại: {quizResult.current_score} / {quizResult.total_points}
-                    </Text>
-                    <Text style={styles.questionText}>
-                        Điểm kiếm được: {quizResult.earned_points}
-                    </Text>
-                    <Text style={styles.questionText}>
+
+            {quizResult && (
+                <View style={styles.resultBox}>
+                    <Text style={styles.resultTitle}>🎉 Quiz Hoàn Thành!</Text>
+
+                    <View style={styles.scoreBox}>
+                        <Text style={styles.scoreText}>Điểm hiện tại</Text>
+                        <Text style={styles.scoreValue}>{quizResult.current_score} / {quizResult.total_points}</Text>
+                    </View>
+
+                    <View style={styles.earnedBox}>
+                        <Text style={styles.earnedText}>Điểm kiếm được</Text>
+                        <Text style={styles.earnedValue}>{quizResult.earned_points}</Text>
+                    </View>
+
+                    <Text style={[styles.passText, { color: quizResult.passed ? '#4CAF50' : '#F44336' }]}>
                         {quizResult.passed ? "Bạn đã vượt qua bài Quiz ✅" : "Bạn chưa vượt qua bài Quiz ❌"}
                     </Text>
                 </View>
             )}
 
-            {/* Quay lại */}
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Text style={styles.backButtonText}>⬅ Quay lại Timeline</Text>
             </TouchableOpacity>
@@ -243,118 +453,80 @@ export default function QuizScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F3F4F6',
-        paddingTop: 54 + STATUSBAR_HEIGHT + 16, // tăng paddingTop để tránh header đè lên nội dung
-        paddingHorizontal: 20,
-    },
-    quizQuestion: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#222',
-        textAlign: 'center',
-        marginBottom: 18,
-        lineHeight: 22,
-    },
-    header: {
-        width: '100%',
-        height: 54 + STATUSBAR_HEIGHT,
-        backgroundColor: '#7C3AED',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        paddingTop: STATUSBAR_HEIGHT,
-        paddingHorizontal: 16,
-        marginBottom: 18,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 10,
-        justifyContent: 'center',
-    },
-    headerStats: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 0,
-    },
-    leftStats: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    flag: {
-        width: 32,
-        height: 20,
-        backgroundColor: '#EF4444',
-        borderRadius: 4,
-    },
-    rightStats: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    statItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginLeft: 12,
-    },
-    statText: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    questionBox: {
-        backgroundColor: '#3B82F6',
-        borderRadius: 16,
+    container: { flex: 1, backgroundColor: '#F3F4F6', paddingTop: 54 + STATUSBAR_HEIGHT + 16, paddingHorizontal: 20 },
+    header: { height: 54 + STATUSBAR_HEIGHT, backgroundColor: '#7C3AED', paddingTop: STATUSBAR_HEIGHT, paddingHorizontal: 16, marginBottom: 18, position: 'absolute', top: 0, left: 0, zIndex: 10, right: 0, justifyContent: 'center' },
+    headerStats: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 0 },
+    leftStats: { flexDirection: 'row', alignItems: 'center' },
+    flag: { width: 32, height: 20, backgroundColor: '#EF4444', borderRadius: 4 },
+    rightStats: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    statItem: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 12 },
+    statText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
+    questionBox: { backgroundColor: '#3B82F6', borderRadius: 16, padding: 24, marginBottom: 40, elevation: 4, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } },
+    questionText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center', lineHeight: 24 },
+    answersContainer: { marginBottom: 40 },
+    answerBox: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 18, paddingHorizontal: 16, marginBottom: 16, alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } },
+    answerText: { fontSize: 16, fontWeight: '500', color: '#111827' },
+    backButton: { marginTop: 10, alignSelf: 'center', borderWidth: 1, borderColor: '#3B82F6', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 24 },
+    backButtonText: { fontSize: 16, fontWeight: '500', color: '#3B82F6' },
+    nextBtn: { padding: 12, backgroundColor: "#3B82F6", borderRadius: 8 },
+    input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 18, borderWidth: 1, borderColor: "#d1d5db" },
+    loading: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" },
+    resultBox: {
+        backgroundColor: '#fff',
         padding: 24,
-        marginBottom: 40,
-        elevation: 4,
+        margin: 16,
+        borderRadius: 16,
         shadowColor: '#000',
-        shadowOpacity: 0.15,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
         shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
+        elevation: 5,
+        alignItems: 'center',
     },
-    questionText: {
+    resultTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 16,
+    },
+    scoreBox: {
+        backgroundColor: '#E0F7FA',
+        padding: 16,
+        borderRadius: 12,
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    scoreText: {
+        fontSize: 14,
+        color: '#00796B',
+        marginBottom: 4,
+    },
+    scoreValue: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#00796B',
+    },
+    earnedBox: {
+        backgroundColor: '#FFF3E0',
+        padding: 16,
+        borderRadius: 12,
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    earnedText: {
+        fontSize: 14,
+        color: '#E65100',
+        marginBottom: 4,
+    },
+    earnedValue: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#E65100',
+    },
+    passText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#fff',
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    answersContainer: {
-        marginBottom: 40,
-    },
-    answerBox: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        paddingVertical: 18,
-        paddingHorizontal: 16,
-        marginBottom: 16,
-        alignItems: 'center',
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        shadowOffset: { width: 0, height: 2 },
-    },
-    answerText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#111827',
-    },
-    backButton: {
-        marginTop: 10,
-        alignSelf: 'center',
-        borderWidth: 1,
-        borderColor: '#3B82F6',
-        borderRadius: 10,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-    },
-    backButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#3B82F6',
     },
 });

@@ -1,4 +1,4 @@
-import { fetchTimeline, heartUsers, initProfile, loginUser, registerUser, StatsUser, UserProfile } from '@/modules/auth/store/authThunks';
+import { fetchTimeline, fetchUserCollection, heartUsers, initProfile, loginUser, registerUser, StatsUser, UserProfile } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -19,6 +19,7 @@ export interface AuthState {
     hearts: any | null;
     StatsInfo: any | null;
     profileUser: any | null
+    collection: any | null;
 }
 
 export interface LoginResponse {
@@ -42,6 +43,7 @@ const initialState: AuthState = {
     hearts: null,
     StatsInfo: null,
     profileUser: null,
+    collection: null
 };
 
 
@@ -159,6 +161,21 @@ const authSlice = createSlice({
             state.loading = false;
             state.error = action.payload as string;
         });
+
+
+        builder
+            .addCase(fetchUserCollection.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchUserCollection.fulfilled, (state, action) => {
+                state.loading = false;
+                state.collection = action.payload;
+            })
+            .addCase(fetchUserCollection.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
     },
 });
 

@@ -3,9 +3,9 @@ import { setCurrentLesson, setSelectedCharacterId } from '@/modules/auth/store/t
 import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Book, Building, Castle, Crown, Flag, Flame, Gavel, Scroll, Shield, Star, Swords, Users } from 'lucide-react-native';
-import { useEffect } from 'react';
-import { ActivityIndicator, Alert, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Book, Building, Castle, Crown, Flag, Flame, Gavel, Scroll, Shield, Star, Swords, Trophy, Users } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, Modal, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 const { width } = Dimensions.get('window');
@@ -28,9 +28,10 @@ export default function VietnamHistoryApp() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<LoginScreenProp>();
   const { hearts, error } = useAppSelector((state: any) => state.auth);
-
+  const [refreshing, setRefreshing] = useState(false);
   const { selectedCharacterId, dynasties, currentLesson, loading } = useAppSelector((state) => state.timeline);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState<any>(null);
   useEffect(() => {
     dispatch(fetchTimeline());
   }, [dispatch]);
@@ -49,6 +50,14 @@ export default function VietnamHistoryApp() {
     }
   }, [error]);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await dispatch(heartUsers()); // gọi lại API load tim
+    } finally {
+      setRefreshing(false); // tắt loading sau khi xong
+    }
+  };
 
   const handleShowCharacterDetail = async () => {
     if (!selectedCharacterId) {
@@ -56,25 +65,9 @@ export default function VietnamHistoryApp() {
       return;
     }
     try {
-      // Gọi API fetch detail
       const detail = await dispatch(fetchDynastyDetail(selectedCharacterId)).unwrap();
-      console.log("✅ Character detail:", detail);
-
-      Alert.alert(
-        `📜 ${detail.data.name}`,
-        `
-      🏰 Thời đại: ${detail.data.era}
-      👑 Triều đại: ${detail.data.dynasty}
-      📅 Năm sinh - mất: ${detail.data.birth_year} - ${detail.data.death_year}
-
-      📝 Mô tả:
-      ${detail.data.description}
-
-      💡 Danh ngôn:
-      "${detail.data.famous_quote}"
-  `
-      );
-
+      setModalData(detail.data);
+      setModalVisible(true);
     } catch (err) {
       console.error("❌ Lỗi fetch detail:", err);
       Alert.alert("Lỗi", "Không thể tải thông tin nhân vật");
@@ -93,6 +86,8 @@ export default function VietnamHistoryApp() {
     isSubEvent?: boolean;
     description?: string;
     subEvents?: TimelineItem[];
+    year?: number;
+
   }
 
   const getAllItems = () => {
@@ -285,7 +280,7 @@ export default function VietnamHistoryApp() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
+      <StatusBar barStyle="light-content" backgroundColor="#2c3542ff" />
       {/* Header */}
       <View style={[styles.header, { backgroundColor: currentItem.color || '#10B981' }]}>
         <View style={styles.headerStats}>
@@ -300,8 +295,8 @@ export default function VietnamHistoryApp() {
               {hearts && <Text style={styles.statText}>{hearts.data?.hearts}</Text>}
             </View>
             <View style={styles.statItem}>
-              <Shield size={17} color="#FFFFFF" />
-              <Text style={styles.statText}>630</Text>
+              <Trophy size={17} color="#ff8400ff" fill="#ff880aff" />
+              <Text style={styles.statText}>150</Text>
             </View>
           </View>
         </View>
@@ -358,7 +353,7 @@ export default function VietnamHistoryApp() {
       </TouchableOpacity>
 
       {/* Timeline */}
-      <ScrollView style={styles.timeline} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.timeline} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} >
         <View style={styles.timelineContainer}>
           {allItems.map((item, index) => (
             <DynastyButton
@@ -378,6 +373,54 @@ export default function VietnamHistoryApp() {
           <ActivityIndicator size="small" color="#3B82F6" />
         </View>
       )}
+
+
+      {modalData && (
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <View style={{
+              width: '85%',
+              maxHeight: '80%',
+              backgroundColor: modalData.color || '#b29247ff',
+              borderRadius: 16,
+              padding: 20
+            }}>
+              <ScrollView>
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 20, marginBottom: 10 }}>
+                  📜 {modalData.name}
+                </Text>
+                <Text style={{ color: '#fff', marginBottom: 5 }}>🏰 Thời đại: {modalData.era || '?'}</Text>
+                <Text style={{ color: '#fff', marginBottom: 5 }}>👑 Triều đại: {modalData.dynasty || '?'}</Text>
+                <Text style={{ color: '#fff', marginBottom: 5 }}>📅 Năm sinh - mất: {modalData.birth_year || '?'} - {modalData.death_year || '?'}</Text>
+                <Text style={{ color: '#fff', marginTop: 10 }}>📝 Mô tả: {modalData.description || 'Chưa có mô tả'}</Text>
+                <Text style={{ color: '#fff', marginTop: 10, fontStyle: 'italic' }}>💡 Danh ngôn: "{modalData.famous_quote || 'Chưa có'}"</Text>
+              </ScrollView>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={{
+                  marginTop: 15,
+                  backgroundColor: '#fff',
+                  padding: 10,
+                  borderRadius: 8,
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: modalData.color || '#3B82F6', fontWeight: 'bold' }}>Đóng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -385,11 +428,11 @@ export default function VietnamHistoryApp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffffff',
+    backgroundColor: "#f4ecd8"
   },
   content: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#f4ecd8',
   },
   centered: {
     justifyContent: 'center',
@@ -428,7 +471,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: '#ffffffff',
     fontSize: 16,
     fontWeight: '600',
   },

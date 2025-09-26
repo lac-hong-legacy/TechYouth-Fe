@@ -26,14 +26,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={20} name="house.fill" color={color} />,
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Events"
         component={EventsScreen}
         options={{
           title: 'Bài học',
           tabBarIcon: ({ color }) => <IconSymbol size={20} name="book.fill" color={color} />,
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Profile"
         component={profilrScreen}

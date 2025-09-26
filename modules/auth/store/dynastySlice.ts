@@ -8,6 +8,7 @@ export interface DynastyState {
     detailLoading: boolean;
     quizLoading: boolean;
     error: string | null;
+    quizResult: any | null;
 }
 
 const initialState: DynastyState = {
@@ -17,6 +18,7 @@ const initialState: DynastyState = {
     detailLoading: false,
     quizLoading: false,
     error: null,
+    quizResult: null,
 };
 
 export interface DynastyDetailData {
@@ -47,16 +49,21 @@ const dynastySlice = createSlice({
             state.selectedCharacterId = action.payload;
             state.selectedDynastyDetail = null;
             state.quizData = null;
+            state.quizResult = null;
             state.error = null;
         },
         clearDynastyDetail: (state) => {
             state.selectedDynastyDetail = null;
             state.quizData = null;
+            state.quizResult = null;
             state.error = null;
         },
         clearError: (state) => {
             state.error = null;
-        }
+        },
+        setQuizResult: (state, action: PayloadAction<any>) => {
+            state.quizResult = action.payload; // ✅ lưu quizResult
+        },
     },
     extraReducers: (builder) => {
         // Dynasty Detail
@@ -83,5 +90,5 @@ const dynastySlice = createSlice({
     },
 });
 
-export const { setSelectedCharacter, clearDynastyDetail, clearError } = dynastySlice.actions;
+export const { setSelectedCharacter, clearDynastyDetail, clearError , setQuizResult } = dynastySlice.actions;
 export default dynastySlice.reducer;

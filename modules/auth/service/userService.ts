@@ -26,6 +26,7 @@ export const userService = {
                 },
                 params: data || {}, // nếu API có query params
             })
+
             console.log('response', response);
             return response.data;
         } catch (error: any) {
@@ -48,6 +49,9 @@ export const userService = {
                 },
                 params: data || {}, // nếu API có query params
             })
+            if (response.data?.userId) {
+                await AsyncStorage.setItem('userId', response.data.userId);
+            }
             console.log('response', response);
             return response.data;
         } catch (error: any) {
@@ -55,6 +59,39 @@ export const userService = {
             throw error;
         }
     },
+
+
+    async userCollection() {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+            console.log('responseTken', token);
+
+            let userId = await AsyncStorage.getItem('userId');
+
+            if (!userId) {
+                // gọi thông qua object
+                const profileData = await this.userProfilee(); // ✅ dùng 'this'
+                userId = profileData.userId;
+                if (!userId) throw new Error('No userId found in profile');
+            }
+
+            const response = await axios.get(`${ENV.API_URL}/api/v1/user/collection`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                params: { UserID: userId },
+            })
+            console.log('response', response);
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching hearts:', error.response || error.message);
+            throw error;
+        }
+    },
+
+
 
     // Stats User
     async StatsUser(data?: HeartsPayload) {
