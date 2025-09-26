@@ -1,14 +1,12 @@
 import AppButton from "@/components/appButton";
 import BackButton from "@/components/BackButton";
-import { LoginResponse } from "@/modules/auth/store/authSlice";
-import { loginUser, registerUser } from "@/modules/auth/store/authThunks";
+import { registerUser } from "@/modules/auth/store/authThunks";
 import { useAppDispatch } from "@/modules/hooks/useAppDispatch";
 import { AuthContext } from '@/rootNavigator/AuthContext';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContext, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, View, Platform, ScrollView } from "react-native";
+import { Alert, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -82,6 +80,8 @@ const SignupNew = () => {
                     setEmail("");
                     setPassword("");
                     setUsername("");
+                    logout();
+
                     navigation.navigate("Login")
                 })
                 .catch((err: any) => {

@@ -1,10 +1,7 @@
 # TY Builder Challenge 2025 - Ven (TechYouth)
 
-## **Ven - App học lịch sử Việt Nam cực kỳ nghiện**
+## **Ven - App học lịch sử Việt Nam**
 
-*Biến việc học sử từ "khổ sở" thành "không thể ngừng chơi"*
-
----
 
 ## 🤔 **1. VẤN ĐỀ MÌNH ĐANG GIẢI QUYẾT**
 
@@ -40,7 +37,7 @@ Có bao giờ bạn ngồi trong lớp lịch sử mà cảm thấy buồn ngủ
 - Thích cái gì ngắn gọn, dễ hiểu, có ích
 
 ### **Tóm lại vấn đề là gì?**
-Cách dạy lịch sử cũ rích (chỉ đọc sách) hoàn toàn không phù hợp với cách não bộ gen Z/millenials hoạt động (cần visual, interactive, bite-sized).
+Cách dạy lịch sử cũ (chỉ đọc sách) hoàn toàn không phù hợp với cách não bộ gen Z/millenials hoạt động (cần visual, interactive, bite-sized).
 
 ---
 
@@ -52,7 +49,7 @@ Cách dạy lịch sử cũ rích (chỉ đọc sách) hoàn toàn không phù h
 ### **4 điều mình có thể làm cho Ven:**
 
 #### **🎯 "Học nhanh"**
-- **Mình hứa**: Học xong câu chuyện 1 anh hùng chỉ trong 3-5 phút
+- Học xong câu chuyện 1 anh hùng chỉ trong 3-5 phút
 - **Cách làm**: Chia nhỏ từng câu chuyện, kể theo kiểu storytelling có hồi hộp, có voice-over cảm xúc
 - **Ví dụ**: Thay vì đọc 10 trang về Trần Hưng Đạo, mình kể 3 episode ngắn:
   - Episode 1: "Quân Mông Cổ đánh đến nơi rồi!" (3 phút)
@@ -60,7 +57,7 @@ Cách dạy lịch sử cũ rích (chỉ đọc sách) hoàn toàn không phù h
   - Episode 3: "Đại thắng Bạch Đằng" (5 phút)
 
 #### **🎮 "Học như chơi game"**
-- **Mình hứa**: Học sử sẽ vui như chơi game RPG, có nhân vật collect, có level up, có pet nuôi
+- Học sử sẽ vui như chơi game RPG, có nhân vật collect, có level up, có pet nuôi
 - **Cách làm**: 
   - **Thu thập nhân vật**: Unlock Trần Hưng Đạo, Lý Thái Tổ, Hai Bà Trưng... (như Pokemon vậy!)
   - **Nuôi linh thú**: Có Rồng, Phượng Hoàng, Hổ... grow theo level của bạn
@@ -68,7 +65,7 @@ Cách dạy lịch sử cũ rích (chỉ đọc sách) hoàn toàn không phù h
 - **Tại sao cool**: Ai cũng thích collect và level up, nhưng chưa ai áp dụng vào lịch sử VN
 
 #### **📱 "Nhìn là hiểu, không cần đọc nhiều chữ"**
-- **Mình hứa**: Ưu tiên hình ảnh đẹp + animation + voice-over thay vì "tường chữ"
+- Ưu tiên hình ảnh đẹp + animation + voice-over thay vì "tường chữ"
 - **Cách làm**: 
   - Mỗi nhân vật có artwork đẹp như trong game
   - Timeline interactive để xem lịch sử VN qua các thời kỳ
@@ -76,7 +73,7 @@ Cách dạy lịch sử cũ rích (chỉ đọc sách) hoàn toàn không phù h
 - **Tại sao khác**: Các app giáo dục khác vẫn toàn chữ, mình là visual-first
 
 #### **🏆 "Học một mình thì buồn, học cùng cộng đồng mới vui"**
-- **Mình hứa**: Kết nối với các bạn cùng học, thi đua healthy, chia sẻ niềm tự hào dân tộc
+- Kết nối với các bạn cùng học, thi đua healthy, chia sẻ niềm tự hào dân tộc
 - **Cách làm**: 
   - Bảng xếp hạng hàng tuần/tháng
   - Share thành tích "vừa unlock Lý Thái Tổ" lên Facebook/TikTok

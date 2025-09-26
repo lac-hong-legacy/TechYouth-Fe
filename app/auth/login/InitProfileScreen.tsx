@@ -1,4 +1,3 @@
-import AppButton from "@/components/appButton";
 import { initProfile } from "@/modules/auth/store/authThunks";
 import { useAppDispatch, useAppSelector } from "@/modules/hooks/useAppDispatch";
 import { AuthContext } from "@/rootNavigator/AuthContext";
@@ -66,7 +65,7 @@ export default function Birthyear() {
                 }}
             />
             {error && <Text style={styles.error}>{error}</Text>}
-            <AppButton title="logout" onPress={handleLogout} />
+            {/* <AppButton title="logout" onPress={handleLogout} /> */}
 
             <TouchableOpacity
                 style={[styles.button, loading && { opacity: 0.7 }]}
