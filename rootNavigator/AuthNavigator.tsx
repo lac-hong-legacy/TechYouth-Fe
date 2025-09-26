@@ -1,8 +1,7 @@
 import BirthYearScreen from '@/app/auth/login/InitProfileScreen';
 import LoginScreen from '@/app/auth/login/login';
 import TextloginScreen from '@/app/auth/login/TextLogin';
-import SignupScreen from '@/app/auth/register';
-import SignupNew from '@/app/auth/signup/SignupNew';
+import { default as SignupNew, default as SignupScreen } from '@/app/auth/signup/SignupNew';
 import WelcomeScreen from '@/app/auth/welcome';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
