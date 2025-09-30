@@ -390,7 +390,7 @@ export default function VietnamHistoryApp() {
             <View style={{
               width: '85%',
               maxHeight: '80%',
-              backgroundColor: modalData.color || '#a69160ff',
+              backgroundColor: modalData.color || '#b29247ff',
               borderRadius: 16,
               padding: 20
             }}>

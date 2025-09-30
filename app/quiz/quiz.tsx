@@ -59,7 +59,7 @@ export default function QuizScreen() {
     const [submitted, setSubmitted] = useState(false);
     const videoRef = useRef<Video>(null);
     const [canGoNext, setCanGoNext] = useState(false);
-    const [countdown, setCountdown] = useState(60); // 60 giây
+    const [countdown, setCountdown] = useState(5); // 60 giây
     const [countdownStarted, setCountdownStarted] = useState(false);
 
 
@@ -169,7 +169,7 @@ export default function QuizScreen() {
         if (countdownStarted) return; // đã chạy rồi thì thôi
         setCountdownStarted(true);
         setCanGoNext(false);
-        setCountdown(60); // reset
+        setCountdown(5); // giảm xuống 5 giây
         const timer = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
@@ -270,7 +270,7 @@ export default function QuizScreen() {
                             if (status.isLoaded && status.didJustFinish) setVideoFinished(true);
 
                             // Bắt đầu đếm khi video play
-                            if ('isPlaying' in status && status.isPlaying && !canGoNext && countdown === 60) {
+                            if ('isPlaying' in status && status.isPlaying && !canGoNext && countdown === 5) {
                                 startCountdown();
                             }
                         }}
