@@ -1,4 +1,4 @@
-import { fetchCharacterQuiz, fetchDynastyDetail } from '@/modules/auth/store/authThunks';
+import { dynasties, eras, fetchCharacterQuiz, fetchDynastyDetail } from '@/modules/auth/store/authThunks';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface DynastyState {
@@ -9,6 +9,10 @@ export interface DynastyState {
     quizLoading: boolean;
     error: string | null;
     quizResult: any | null;
+    dynastyList: string[];   // ✅ thêm
+    eraList: string[];       // ✅ thêm
+    loadingDynasties: boolean; // loading riêng cho dynasties
+    loadingEras: boolean;      // loading riêng cho eras
 }
 
 const initialState: DynastyState = {
@@ -19,7 +23,11 @@ const initialState: DynastyState = {
     quizLoading: false,
     error: null,
     quizResult: null,
-};
+    dynastyList: [],
+    eraList: [],
+    loadingDynasties: false,
+    loadingEras: false,
+}
 
 export interface DynastyDetailData {
     id: string;
@@ -87,8 +95,37 @@ const dynastySlice = createSlice({
             state.quizLoading = false;
             state.error = action.payload as string;
         });
+
+
+        // Dynasties
+        builder.addCase(dynasties.pending, (state) => {
+            state.loadingDynasties = true;
+            state.error = null;
+        });
+        builder.addCase(dynasties.fulfilled, (state, action) => {
+            state.loadingDynasties = false;
+            state.dynastyList = action.payload?.data || []; // lấy data từ payload
+        });
+        builder.addCase(dynasties.rejected, (state, action) => {
+            state.loadingDynasties = false;
+            state.error = action.payload as string;
+        });
+
+        // Eras
+        builder.addCase(eras.pending, (state) => {
+            state.loadingEras = true;
+            state.error = null;
+        });
+        builder.addCase(eras.fulfilled, (state, action) => {
+            state.loadingEras = false;
+            state.eraList = action.payload?.data || []; // lấy data từ payload
+        });
+        builder.addCase(eras.rejected, (state, action) => {
+            state.loadingEras = false;
+            state.error = action.payload as string;
+        });
     },
 });
 
-export const { setSelectedCharacter, clearDynastyDetail, clearError , setQuizResult } = dynastySlice.actions;
+export const { setSelectedCharacter, clearDynastyDetail, clearError, setQuizResult } = dynastySlice.actions;
 export default dynastySlice.reducer;

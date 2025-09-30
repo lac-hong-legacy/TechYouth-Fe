@@ -60,10 +60,10 @@ const LoginForm = () => {
         const hasErrors = Object.values(errors).some((msg) => msg);
         if (hasErrors) return;
 
-        if (isLoggedIn) {
-            Alert.alert("Thông báo", "Bạn đã đăng nhập rồi!");
-            return;
-        }
+        // if (isLoggedIn) {
+        //     Alert.alert("Thông báo", "Bạn đã đăng nhập rồi!");
+        //     return;
+        // }
 
         if (email && password) {
             dispatch(loginUser({ email, password }))

@@ -191,3 +191,27 @@ export const loses = createAsyncThunk(
     }
 );
 
+export const dynasties = createAsyncThunk(
+    "dynastie/dynasties",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await dynastyService.getDynasties();
+            return response;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const eras = createAsyncThunk(
+    "dynasties/eras",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await dynastyService.getEras();
+            return response;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+

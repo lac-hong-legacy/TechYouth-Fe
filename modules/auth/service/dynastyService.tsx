@@ -25,6 +25,39 @@ export const dynastyService = {
         }
     },
 
+    async getDynasties() {
+        try {
+            const response = await axios.get(`${ENV.API_URL}/api/v1/content/dynasties`, {
+                headers: {
+                    'Accept': 'application/json',
+                },
+            }
+            );
+            console.log('Dynasties API response:', response);
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching dynasty detail:', error.response || error.message);
+            throw error;
+        }
+    },
+
+    async getEras() {
+        try {
+            const response = await axios.get(`${ENV.API_URL}/api/v1/content/eras`, {
+                headers: {
+                    'Accept': 'application/json',
+                },
+            }
+            );
+            console.log('Eras API response:', response);
+            return response.data;
+        } catch (error: any) {
+            console.log('Error fetching dynasty detail:', error.response || error.message);
+            throw error;
+        }
+    },
+
+
     // Get quiz data for character
     async getCharacterQuiz(characterId: string) {
         try {

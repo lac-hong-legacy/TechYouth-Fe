@@ -7,7 +7,6 @@ import { Book, Building, Castle, Crown, Flag, Flame, Gavel, Scroll, Shield, Star
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Modal, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-
 const { width } = Dimensions.get('window');
 type LoginScreenProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
 
@@ -285,7 +284,7 @@ export default function VietnamHistoryApp() {
       <View style={[styles.header, { backgroundColor: currentItem.color || '#10B981' }]}>
         <View style={styles.headerStats}>
           <View style={styles.leftStats}>
-            <View style={styles.flag} />
+            <Text style={{ fontSize: 20 }}>🇻🇳</Text>
           </View>
           <View style={styles.rightStats}>
             <View style={styles.statItem}>
@@ -391,7 +390,7 @@ export default function VietnamHistoryApp() {
             <View style={{
               width: '85%',
               maxHeight: '80%',
-              backgroundColor: modalData.color || '#b29247ff',
+              backgroundColor: modalData.color || '#a69160ff',
               borderRadius: 16,
               padding: 20
             }}>
@@ -403,7 +402,18 @@ export default function VietnamHistoryApp() {
                 <Text style={{ color: '#fff', marginBottom: 5 }}>👑 Triều đại: {modalData.dynasty || '?'}</Text>
                 <Text style={{ color: '#fff', marginBottom: 5 }}>📅 Năm sinh - mất: {modalData.birth_year || '?'} - {modalData.death_year || '?'}</Text>
                 <Text style={{ color: '#fff', marginTop: 10 }}>📝 Mô tả: {modalData.description || 'Chưa có mô tả'}</Text>
+                <Text style={{ color: '#fff', marginTop: 10, fontWeight: 'bold' }}>📝 Dấu ấn lịch sử:</Text>
+                {Array.isArray(modalData.achievements) && modalData.achievements.length > 0 ? (
+                  modalData.achievements.map((item: any, index: any) => (
+                    <Text key={index} style={{ color: '#fff', marginLeft: 16, marginTop: 4 }}>
+                      • {item}
+                    </Text>
+                  ))
+                ) : (
+                  <Text style={{ color: '#fff', marginLeft: 16, marginTop: 4 }}>Chưa có dấu ấn lịch sử</Text>
+                )}
                 <Text style={{ color: '#fff', marginTop: 10, fontStyle: 'italic' }}>💡 Danh ngôn: "{modalData.famous_quote || 'Chưa có'}"</Text>
+
               </ScrollView>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}

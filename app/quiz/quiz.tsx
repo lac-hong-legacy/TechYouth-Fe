@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/modules/hooks/useAppDispatch';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av';
-import { Flame, Shield } from 'lucide-react-native';
+import { Flame, Trophy } from 'lucide-react-native';
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -65,6 +65,9 @@ export default function QuizScreen() {
 
     const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
     const [connectAnswer, setConnectAnswer] = useState<{ left: string, right: string }[]>([]);
+
+    // xoay màng hình
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
 
     // Lấy quiz
@@ -142,7 +145,7 @@ export default function QuizScreen() {
                 }
             } else {
                 // sai -> báo lỗi, không chuyển câu
-                alert("Sai rồi, thử lại nhé!");
+                Alert.alert("Thông báo", "Sai rồi, thử lại nhé!");
                 try {
                     await dispatch(loses()).unwrap();
                     const updatedHearts = await dispatch(heartUsers()).unwrap();
@@ -225,6 +228,7 @@ export default function QuizScreen() {
         );
     }
 
+
     // Render video
     if (!showQuiz && videoUrl) {
         return (
@@ -270,6 +274,7 @@ export default function QuizScreen() {
                                 startCountdown();
                             }
                         }}
+
                     />
                 </View>
 
@@ -298,7 +303,7 @@ export default function QuizScreen() {
             <View style={styles.header}>
                 <View style={styles.headerStats}>
                     <View style={styles.leftStats}>
-                        <View style={styles.flag} />
+                        <Text style={{ fontSize: 20 }}>🇻🇳</Text>
                     </View>
                     <View style={styles.rightStats}>
                         <View style={styles.statItem}>
@@ -306,8 +311,8 @@ export default function QuizScreen() {
                             {hearts && <Text style={styles.statText}>{hearts.data?.hearts}</Text>}
                         </View>
                         <View style={styles.statItem}>
-                            <Shield size={17} color="#FFFFFF" />
-                            <Text style={styles.statText}>630</Text>
+                            <Trophy size={17} color="#ff2200ff" fill="#ff6c0aff" />
+                            <Text style={styles.statText}>150</Text>
                         </View>
                     </View>
                 </View>
@@ -439,79 +444,178 @@ export default function QuizScreen() {
                         <Text style={styles.earnedValue}>{quizResult.earned_points}</Text>
                     </View>
 
-                    <Text style={[styles.passText, { color: quizResult.passed ? '#4CAF50' : '#F44336' }]}>
+                    <Text style={[
+                        styles.passText,
+                        { color: quizResult.passed ? '#4E342E' : '#B71C1C' }  // nâu đậm / đỏ
+                    ]}>
                         {quizResult.passed ? "Bạn đã vượt qua bài Quiz ✅" : "Bạn chưa vượt qua bài Quiz ❌"}
                     </Text>
+
+                    <TouchableOpacity
+                        style={styles.backButtonResult}
+                        onPress={() => navigation.popToTop()}
+                    >
+                        <Text style={styles.backButtonText}>⬅ Quay về Timeline</Text>
+                    </TouchableOpacity>
                 </View>
             )}
-
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.backButtonText}>⬅ Quay lại Timeline</Text>
-            </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F3F4F6', paddingTop: 54 + STATUSBAR_HEIGHT + 16, paddingHorizontal: 20 },
-    header: { height: 54 + STATUSBAR_HEIGHT, backgroundColor: '#7C3AED', paddingTop: STATUSBAR_HEIGHT, paddingHorizontal: 16, marginBottom: 18, position: 'absolute', top: 0, left: 0, zIndex: 10, right: 0, justifyContent: 'center' },
-    headerStats: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 0 },
+    container: {
+        flex: 1,
+        backgroundColor: '#f4ecd8',
+        paddingTop: 54 + STATUSBAR_HEIGHT + 16,
+        paddingHorizontal: 20
+    },
+    header: {
+        height: 54 + STATUSBAR_HEIGHT,
+        backgroundColor: "#7C3AED",
+        paddingTop: STATUSBAR_HEIGHT,
+        paddingHorizontal: 16,
+        marginBottom: 24,
+        position: "absolute",
+        top: 0,
+        left: 0,
+        zIndex: 10,
+        right: 0,
+        justifyContent: "center",
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+    },
+    headerStats: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
     leftStats: { flexDirection: 'row', alignItems: 'center' },
     flag: { width: 32, height: 20, backgroundColor: '#EF4444', borderRadius: 4 },
     rightStats: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     statItem: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 12 },
     statText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
-    questionBox: { backgroundColor: '#3B82F6', borderRadius: 16, padding: 24, marginBottom: 40, elevation: 4, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } },
-    questionText: { fontSize: 18, fontWeight: '600', color: '#fff', textAlign: 'center', lineHeight: 24 },
-    answersContainer: { marginBottom: 40 },
-    answerBox: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 18, paddingHorizontal: 16, marginBottom: 16, alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } },
-    answerText: { fontSize: 16, fontWeight: '500', color: '#111827' },
-    backButton: { marginTop: 10, alignSelf: 'center', borderWidth: 1, borderColor: '#3B82F6', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 24 },
-    backButtonText: { fontSize: 16, fontWeight: '500', color: '#3B82F6' },
-    nextBtn: { padding: 12, backgroundColor: "#3B82F6", borderRadius: 8 },
-    input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 18, borderWidth: 1, borderColor: "#d1d5db" },
-    loading: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" },
-    resultBox: {
-        backgroundColor: '#fff',
-        padding: 24,
-        margin: 16,
+    questionBox: {
+        backgroundColor: "#FFF8DC", // giấy cổ
         borderRadius: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        padding: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        shadowColor: "#000",
         shadowOpacity: 0.1,
         shadowRadius: 6,
-        elevation: 5,
-        alignItems: 'center',
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 4,
+    },
+    questionText: {
+        fontSize: 18,
+        fontWeight: "700",
+        textAlign: "center",
+        color: "#111827",
+        lineHeight: 26,
+    },
+    answersContainer: { marginBottom: 40 },
+    answerBox: {
+        backgroundColor: "#FFF8F0",
+        borderRadius: 14,
+        paddingVertical: 16,
+        paddingHorizontal: 18,
+        marginBottom: 14,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#D6CCC2",
+        elevation: 2,
+    },
+    answerText: { fontSize: 16, fontWeight: '500', color: '#111827' },
+    backButton: {
+        marginTop: 20,
+        alignSelf: "center",
+        borderWidth: 1,
+        borderColor: "#7C3AED",
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+    },
+    backButtonText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#7C3AED",
+    },
+    nextBtn: {
+        padding: 16,
+        backgroundColor: "#16A34A", // xanh lá
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 20,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 4,
+    },
+    input: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 14,
+        fontSize: 16,
+        marginBottom: 18,
+        borderWidth: 1,
+        borderColor: "#d1d5db",
+    },
+    loading: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#fff",
+    },
+    resultBox: {
+        backgroundColor: "#F5F5DC", // vàng nhạt kiểu giấy cổ
+        padding: 28,
+        margin: 20,
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 6,
+        alignItems: "center",
+        justifyContent: "center", // căn giữa
     },
     resultTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#333',
-        marginBottom: 16,
+        fontSize: 26,
+        fontWeight: "800",
+        color: "#6D4C41", // nâu lịch sử
+        marginBottom: 20,
+        textAlign: "center",
     },
     scoreBox: {
-        backgroundColor: '#E0F7FA',
-        padding: 16,
-        borderRadius: 12,
-        width: '100%',
-        alignItems: 'center',
+        backgroundColor: "#FFF8DC", // vàng nhạt hơn
+        padding: 18,
+        borderRadius: 14,
+        width: "80%",
+        alignItems: "center",
         marginBottom: 12,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     scoreText: {
         fontSize: 14,
-        color: '#00796B',
+        color: '#5D4037',
         marginBottom: 4,
     },
     scoreValue: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '700',
-        color: '#00796B',
+        color: '#3E2723', // nâu đậm
     },
     earnedBox: {
-        backgroundColor: '#FFF3E0',
+        backgroundColor: '#FFEBCD', // vàng nhạt kiểu giấy cũ
         padding: 16,
         borderRadius: 12,
-        width: '100%',
+        width: '80%',
         alignItems: 'center',
         marginBottom: 16,
     },
@@ -528,5 +632,17 @@ const styles = StyleSheet.create({
     passText: {
         fontSize: 18,
         fontWeight: '600',
+        marginTop: 8,
+        textAlign: 'center', // căn giữas
+    },
+    backButtonResult: {
+        marginTop: 20,
+        alignSelf: "center",
+        borderWidth: 1,
+        borderColor: "#a500ecff",
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        backgroundColor: "#ece5e3ff",
     },
 });

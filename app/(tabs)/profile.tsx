@@ -176,7 +176,7 @@ export default function ProfilrScreen() {
                         <Text style={styles.statNumber}>
                             {StatsInfo?.data?.streak ?? 0}🔥
                         </Text>
-                        <Text style={styles.statLabel}>Streak</Text>
+                        <Text style={styles.statLabel}>Ngày streak</Text>
                     </View>
                 </View>
 
@@ -232,7 +232,74 @@ export default function ProfilrScreen() {
                 </View>
 
                 <View style={styles.personalInfoHeader}>
-                    <Text style={styles.personalInfoTitle}>Thành tựu - ảnh</Text>
+                    <Text style={styles.personalInfoTitle}>Huy hiệu thử thách</Text>
+                </View>
+
+                <View style={styles.statsContainer}>
+                    <View style={styles.statColumn}>
+                        {mainImage ? (
+                            <TouchableOpacity onPress={() => setModalVisible(true)}>
+                                <Image
+                                    source={{ uri: getImageUrl(mainImage)! }}
+                                    style={{ width: 200, height: 200, borderRadius: 8 }}
+                                />
+                            </TouchableOpacity>
+                        ) : (
+                            <Text>Chưa có ảnh nổi bật</Text>
+                        )}
+
+                        {/* Modal chứa tất cả ảnh */}
+                        <Modal
+                            visible={modalVisible}
+                            transparent={true}
+                            onRequestClose={() => setModalVisible(false)}
+                        >
+                            <View
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: "rgba(0,0,0,0.9)",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <TouchableOpacity
+                                    style={{ position: "absolute", top: 40, right: 20, zIndex: 10 }}
+                                    onPress={() => setModalVisible(false)}
+                                >
+                                    <Text style={{ color: "#fff", fontSize: 18 }}>Close</Text>
+                                </TouchableOpacity>
+
+                                <ScrollView horizontal pagingEnabled>
+                                    {collection?.characters?.characters.map((item: any, index: number) => {
+                                        const url = getImageUrl(item);
+                                        if (!url) return null;
+                                        return (
+                                            <View key={index} style={{ alignItems: "center", justifyContent: "center", marginHorizontal: 10 }}>
+                                                <Image
+                                                    source={{ uri: url }}
+                                                    style={{ width: 300, height: 300, borderRadius: 8 }}
+                                                    resizeMode="contain"
+                                                />
+                                                <Text style={{ color: "#fff", marginTop: 5 }}>{item.name}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </ScrollView>
+                            </View>
+                        </Modal>
+                    </View>
+                    <View style={styles.statColumn}>
+                        <Image source={require("@/assets/images/icon-cao-removebg-preview.png")} style={styles.statImage} />
+                        <Text style={styles.statLabel}>Theo dõi</Text>
+                    </View>
+                    <View style={styles.statColumn}>
+                        <Image source={require("@/assets/images/anh1-removebg-preview.png")} style={styles.statImage} />
+                        <Text style={styles.statLabel}>Danh hiệu</Text>
+                    </View>
+                </View>
+
+                <View style={styles.personalInfoHeader}>
+                    <Text style={styles.personalInfoTitle}>Thành tích</Text>
                 </View>
 
                 <View style={styles.statsContainer}>
